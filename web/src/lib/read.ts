@@ -1,5 +1,5 @@
 import { Contract, type Provider } from "ethers";
-import { cipherSaleAbi, erc20Abi } from "@/abi/cipher-sale";
+import { cipherSaleAbi, bep20Abi } from "@/abi/cipher-sale";
 import { cipherTokenAbi } from "@/abi/cipher-token";
 import { saleFactoryAbi } from "@/abi/sale-factory";
 import { ADDR } from "@/lib/chain";
@@ -36,10 +36,10 @@ export async function loadSale(provider: Provider, address: string): Promise<Sal
     sale.raised(),
     sale.options(),
   ]);
-  const erc20 = new Contract(token, erc20Abi, provider);
+  const bep20 = new Contract(token, bep20Abi, provider);
   const [name, symbol] = await Promise.all([
-    erc20.name().catch(() => "Token"),
-    erc20.symbol().catch(() => ""),
+    bep20.name().catch(() => "Token"),
+    bep20.symbol().catch(() => ""),
   ]);
   return {
     address,

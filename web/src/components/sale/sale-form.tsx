@@ -2,7 +2,7 @@
 
 import { Contract } from "ethers";
 import { useState } from "react";
-import { erc20Abi } from "@/abi/cipher-sale";
+import { bep20Abi } from "@/abi/cipher-sale";
 import { saleFactoryAbi } from "@/abi/sale-factory";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -57,10 +57,10 @@ export function SaleForm() {
       const listingPay = (hardCap * liquidityBps) / 10000n;
       const tokenLiquidity = listingPay === 0n ? 0n : (listingPay * listingRate) / ONE;
       const need = tokenPresale + tokenLiquidity;
-      const erc20 = new Contract(token, erc20Abi, signer);
-      const allowance = await erc20.allowance(me, ADDR.saleFactory);
+      const bep20 = new Contract(token, bep20Abi, signer);
+      const allowance = await bep20.allowance(me, ADDR.saleFactory);
       if (allowance < need) {
-        const approved = await erc20.approve(ADDR.saleFactory, need);
+        const approved = await bep20.approve(ADDR.saleFactory, need);
         await approved.wait();
       }
       const opts = {

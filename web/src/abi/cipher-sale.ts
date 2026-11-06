@@ -17,7 +17,7 @@ export const cipherSaleAbi = [
   "event Eligible(address indexed buyer)",
 ] as const;
 
-export const erc20Abi = [
+export const bep20Abi = [
   "function name() view returns (string)",
   "function symbol() view returns (string)",
   "function balanceOf(address) view returns (uint256)",

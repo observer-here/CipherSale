@@ -10,7 +10,8 @@
   color-scheme: light;
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; text-size-adjust: 100%; }
 body {
   margin: 0;
   min-height: 100vh;
@@ -21,7 +22,17 @@ body {
 }
 a { color: inherit; text-decoration: none; }
 button, input { font: inherit; }
-button { cursor: pointer; }
+button { cursor: pointer; touch-action: manipulation; }
+a, button, .card { transition: background-color 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s, transform 0.2s, box-shadow 0.2s; }
+.nav a:not(.active):hover, .icon-btn:hover { background: rgba(0, 0, 0, 0.05); }
+.btn:hover, .wallet-btn:hover { opacity: 0.88; }
+.btn:active, .wallet-btn:active { transform: translateY(1px); }
+.btn-ghost:hover { background: #f4f4f2; opacity: 1; }
+.filters button:not(.on):hover { background: #f4f4f2; }
+.card:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.07); }
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { transition: none !important; scroll-behavior: auto !important; }
+}
 .mono { font-family: ui-monospace, "Cascadia Mono", monospace; }
 ::selection { background: #c8f5d4; }
 
@@ -94,6 +105,8 @@ button { cursor: pointer; }
 .search kbd { position: absolute; top: 7px; right: 8px; padding: 1px 8px; border-radius: 6px; background: #e9e9e6; color: #555; font: inherit; font-size: 12px; }
 .icon-btn { position: relative; display: grid; width: 34px; height: 34px; place-items: center; border: 0; background: transparent; }
 .icon-btn::after { content: ""; position: absolute; top: 4px; right: 7px; width: 7px; height: 7px; border-radius: 99px; background: var(--ink); }
+.menu-btn { display: none; }
+.menu-btn::after { display: none; }
 .wallet-btn { display: inline-flex; align-items: center; gap: 9px; height: 36px; padding: 0 14px; border: 0; border-radius: 9px; background: var(--ink); color: #fff; font-size: 12.5px; font-weight: 500; }
 .menu {
   position: absolute;
@@ -181,6 +194,7 @@ button { cursor: pointer; }
 .sheet { display: grid; margin: 0; }
 .sheet div { display: grid; grid-template-columns: 9rem 1fr; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
 .sheet dt { color: var(--muted); }
+.sheet dd { margin: 0; overflow-wrap: anywhere; }
 .box { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
 .stack { display: grid; gap: 12px; }
 .back { color: var(--muted); font-size: 13px; }
@@ -202,21 +216,73 @@ button { cursor: pointer; }
 .balances { display: flex; gap: 16px; margin-bottom: 10px; font-size: 14px; }
 .row { display: flex; flex-wrap: wrap; gap: 8px; }
 
+/* Tablet: same layout as desktop, compressed */
 @media (max-width: 1100px) {
-  .app { grid-template-columns: 1fr; }
-  .side { position: static; height: auto; padding-bottom: 20px; }
-  .side::after { display: none; }
-  .side-foot { margin-bottom: 0; }
-  .nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .split, .stats, .cards, .form { grid-template-columns: 1fr; }
-  .stats { height: auto; }
-  .stat { padding: 14px 18px; }
+  .app { grid-template-columns: 200px minmax(0, 1fr); }
+  .side { padding: 20px 6px 0 14px; }
+  .brand { margin-bottom: 24px; font-size: 18px; }
+  .nav a { gap: 12px; padding: 0 12px; font-size: 13px; }
+  .net { padding: 0 10px; }
+  .top { padding: 14px 14px 0 18px; }
+  .content { padding: 24px 14px 40px 18px; }
+  .hero h1 { font-size: 34px; line-height: 43px; }
+  .points { flex-wrap: wrap; gap: 10px 0; }
+  .points li { padding: 0 18px; }
+  .stat { gap: 10px; padding: 0 14px; }
+  .stat b { font-size: 17px; }
+  .filters { margin-left: 24px; }
+  .cards { gap: 14px; }
+}
+
+@media (max-width: 900px) {
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .split, .form { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Phone: sidebar folds into a drawer opened by the menu button */
+@media (max-width: 768px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .side { position: fixed; z-index: 20; top: 0; left: 0; width: 256px; height: 100dvh; padding: 22px 8px 0 20px; overflow-y: auto; visibility: hidden; transform: translateX(-100%); transition: transform 0.25s ease, visibility 0.25s; }
+  .side.open { visibility: visible; transform: none; box-shadow: 0 0 40px rgba(0, 0, 0, 0.18); }
+  .scrim { position: fixed; inset: 0; z-index: 15; background: rgba(0, 0, 0, 0.35); }
+  .menu-btn { display: grid; margin-right: auto; }
+
+  .top { flex-wrap: wrap; gap: 10px; padding: 12px 16px 0; }
+  .search { order: 3; flex: 1 1 100%; width: 100%; margin: 0; }
+  .menu { top: 56px; right: 16px; }
+  .content { padding: 20px 16px 40px; }
+
+  .hero { display: flex; min-height: 0; flex-direction: column; }
+  .hero-copy { order: 1; }
+  .hero-photo { position: static; order: 2; width: 100%; max-width: 560px; margin: 8px auto -8px; }
+  .points { order: 3; flex-wrap: wrap; gap: 10px 24px; margin-top: 8px; }
+  .points li, .points li + li { padding: 0; border-left: 0; }
+  .hero h1 { margin-top: 16px; font-size: 32px; line-height: 40px; }
+  .lede { max-width: none; }
+  .actions { flex-wrap: wrap; }
+
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); height: auto; margin-top: 24px; }
+  .stat { padding: 14px 16px; }
   .stat + .stat::before { display: none; }
-  .hero { min-height: 0; }
-  .hero-photo { position: static; width: 100%; }
-  .points { flex-wrap: wrap; gap: 8px 0; }
-  .hero h1 { font-size: 32px; line-height: 40px; }
-  .board-head { flex-wrap: wrap; gap: 10px; }
-  .filters { margin-left: 0; }
-  .search { width: 100%; }
+  .stat:nth-child(even)::before { display: block; }
+  .stat:nth-child(n + 3) { border-top: 1px solid var(--line); }
+
+  .board-head { flex-wrap: wrap; gap: 12px; }
+  .filters { order: 3; width: 100%; margin-left: 0; overflow-x: auto; scrollbar-width: none; }
+  .filters button { flex: none; }
+  .view-all { margin-left: auto; }
+  .cards { margin-top: 16px; }
+}
+
+@media (max-width: 680px) {
+  .cards { grid-template-columns: minmax(0, 1fr); }
+  .hero h1 { font-size: 28px; line-height: 36px; }
+  .kicker { letter-spacing: 0.14em; }
+  .stat { gap: 10px; padding: 12px; }
+  .stat b { font-size: 17px; }
+  .stat small { font-size: 11px; }
+  .page-head h1 { font-size: 22px; }
+  .sheet div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .balances { flex-direction: column; gap: 4px; }
+  .wallet-btn { padding: 0 12px; }
 }

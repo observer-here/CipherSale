@@ -10,8 +10,8 @@ import { short } from "@/lib/format";
 
 export function WalletMenu() {
   const { account, connect, disconnect } = useWallet();
-  const { cht, ccht } = useBalances();
   const [open, setOpen] = useState(false);
+  const { cht, ccht } = useBalances(open);
 
   if (!account) return <button className="wallet-btn" onClick={connect}><Icon d={paths.wallet} />Connect</button>;
 

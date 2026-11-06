@@ -3,6 +3,7 @@
 import { Contract } from "ethers";
 import { useState } from "react";
 import { chtAbi } from "@/abi/cht";
+import { UnwrapDialog } from "@/components/token/unwrap-dialog";
 import { WrapDialog } from "@/components/token/wrap-dialog";
 import { Button } from "@/components/ui/button";
 import { useBalances } from "@/hooks/balances";
@@ -45,6 +46,9 @@ export default function AssetsPage() {
           </div>
           <div className="box">
             <WrapDialog onDone={() => refresh().catch(() => undefined)} />
+          </div>
+          <div className="box">
+            <UnwrapDialog onDone={() => refresh().catch(() => undefined)} />
           </div>
           <div className="row">
             <Button variant="ghost" onClick={claim}>Faucet 1,000 CHT</Button>

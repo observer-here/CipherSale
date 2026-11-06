@@ -10,7 +10,8 @@ import { confidentialBalance } from "@/lib/read";
 import { decryptHandle } from "@/primus/decrypt";
 import { openFhe } from "@/primus/sdk";
 
-export function useBalances() {
+// Decrypting cCHT starts the FHE SDK, so callers pass enabled=false until the balances are on screen.
+export function useBalances(enabled = true) {
   const { account, provider } = useWallet();
   const [cht, setCht] = useState("—");
   const [ccht, setCcht] = useState("—");
@@ -29,8 +30,8 @@ export function useBalances() {
   }, [provider, account]);
 
   useEffect(() => {
-    refresh().catch(() => undefined);
-  }, [refresh]);
+    if (enabled) refresh().catch(() => undefined);
+  }, [enabled, refresh]);
 
   return { cht, ccht, refresh };
 }

@@ -82,18 +82,24 @@ function SearchBox() {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const [bell, setBell] = useState(false);
+  const [drawer, setDrawer] = useState(false);
+
+  useEffect(() => setDrawer(false), [path]);
 
   return (
     <div className="app">
-      <aside className="side">
+      {drawer ? <div className="scrim" onClick={() => setDrawer(false)} /> : null}
+      <aside className={drawer ? "side open" : "side"}>
         <Link href="/" className="brand">
           <svg width="28" height="16" viewBox="0 0 28 16" fill="currentColor" aria-hidden>
             <path d="M9.5 0H17l-6 16H3.5z M20 0h7.5l-6 16H14z" />
           </svg>
           CipherSale
         </Link>
-        <NavGroup items={platform} path={path} />
-        <NavGroup label="RESOURCES" items={resources} path={path} tight />
+        <div className="side-nav">
+          <NavGroup items={platform} path={path} />
+          <NavGroup label="RESOURCES" items={resources} path={path} tight />
+        </div>
         <div className="side-foot">
           <div className="net" title="CipherSale runs on BNB testnet only">
             <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden><path d="M8 1 14 8 8 15 2 8z" fill="#f0b90b" /></svg>
@@ -105,6 +111,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
       <div className="workspace">
         <header className="top">
+          <button className="icon-btn menu-btn" aria-label="Open menu" onClick={() => setDrawer(true)}>
+            <Icon d="M4 7h16 M4 12h16 M4 17h16" size={22} />
+          </button>
           <SearchBox />
           <button className="icon-btn" aria-label="Notices" onClick={() => setBell((open) => !open)}>
             <Icon d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6z M10 19a2 2 0 0 0 4 0" size={20} />
