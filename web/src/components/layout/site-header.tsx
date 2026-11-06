@@ -23,7 +23,7 @@ const links = [
 
 export function SiteHeader() {
   const path = usePathname();
-  const { account, provider, busy, error, connect } = useWallet();
+  const { account, provider, connect, disconnect } = useWallet();
   const [cht, setCht] = useState("—");
   const [ccht, setCcht] = useState("—");
   const [open, setOpen] = useState(false);
@@ -83,13 +83,14 @@ export function SiteHeader() {
               <Button onClick={claim}>Faucet</Button>
               <Button onClick={() => setOpen((value) => !value)}>{open ? "Close" : "Wrap"}</Button>
               <span className="mono text-white/55">{short(account)}</span>
+              <Button onClick={disconnect}>Disconnect</Button>
             </>
           ) : (
-            <Button disabled={busy} onClick={connect}>{busy ? "Connecting" : "Connect"}</Button>
+            <Button onClick={connect}>Connect</Button>
           )}
         </div>
       </div>
-      {error || note ? <p className="px-6 pb-3 text-sm text-[#9ff6ff]">{error || note}</p> : null}
+      {note ? <p className="px-6 pb-3 text-sm text-[#9ff6ff]">{note}</p> : null}
       <Band open={open}>
         <WrapDialog onDone={() => { setOpen(false); refresh().catch(() => undefined); }} />
       </Band>

@@ -1,65 +1,49 @@
 "use client";
 
-import { BrowserProvider } from "ethers";
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import { CHAIN_HEX, CHAIN_ID, RPC } from "@/lib/chain";
+// Reown AppKit (WalletConnect + injected wallets) pinned to BNB testnet.
+// https://docs.reown.com/appkit/next/core/installation
+import { createAppKit, useAppKit, useAppKitAccount, useAppKitProvider, useDisconnect } from "@reown/appkit/react";
+import { EthersAdapter } from "@reown/appkit-adapter-ethers";
+import { bscTestnet } from "@reown/appkit/networks";
+import { BrowserProvider, type Eip1193Provider } from "ethers";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { CHAIN_ID } from "@/lib/chain";
+
+createAppKit({
+  adapters: [new EthersAdapter()],
+  networks: [bscTestnet],
+  defaultNetwork: bscTestnet,
+  projectId: process.env.NEXT_PUBLIC_REOWN_PROJECT_ID ?? "",
+  metadata: {
+    name: "CipherSale",
+    description: "Confidential sales on BNB testnet",
+    url: "http://localhost:3456",
+    icons: [],
+  },
+  features: { analytics: false, email: false, socials: false },
+});
 
 type Wallet = {
   account?: string;
   provider?: BrowserProvider;
-  busy: boolean;
-  error?: string;
-  connect: () => Promise<void>;
+  connect: () => void;
+  disconnect: () => void;
 };
 
 const Ctx = createContext<Wallet | null>(null);
 
-async function ensureChain() {
-  const ethereum = window.ethereum;
-  if (!ethereum) throw new Error("Install a browser wallet");
-  const chain = await ethereum.request({ method: "eth_chainId" });
-  if (chain === CHAIN_HEX) return;
-  try {
-    await ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: CHAIN_HEX }] });
-  } catch (err) {
-    const code = (err as { code?: number }).code;
-    if (code !== 4902) throw err;
-    await ethereum.request({
-      method: "wallet_addEthereumChain",
-      params: [{ chainId: CHAIN_HEX, chainName: "BNB testnet", nativeCurrency: { name: "tBNB", symbol: "tBNB", decimals: 18 }, rpcUrls: [RPC] }],
-    });
-  }
-}
-
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const [account, setAccount] = useState<string>();
-  const [provider, setProvider] = useState<BrowserProvider>();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string>();
+  const { open } = useAppKit();
+  const { disconnect } = useDisconnect();
+  const { address } = useAppKitAccount();
+  const { walletProvider } = useAppKitProvider<Eip1193Provider>("eip155");
 
   const value = useMemo<Wallet>(() => ({
-    account,
-    provider,
-    busy,
-    error,
-    connect: async () => {
-      setBusy(true);
-      setError(undefined);
-      try {
-        await ensureChain();
-        const next = new BrowserProvider(window.ethereum as never);
-        const accounts = await next.send("eth_requestAccounts", []);
-        const network = await next.getNetwork();
-        if (Number(network.chainId) !== CHAIN_ID) throw new Error("Switch the wallet to BNB testnet");
-        setProvider(next);
-        setAccount(accounts[0]);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Wallet rejected");
-      } finally {
-        setBusy(false);
-      }
-    },
-  }), [account, provider, busy, error]);
+    account: address,
+    provider: address && walletProvider ? new BrowserProvider(walletProvider, CHAIN_ID) : undefined,
+    connect: () => open(),
+    disconnect: () => { disconnect(); },
+  }), [address, walletProvider, open, disconnect]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -68,12 +52,4 @@ export function useWallet() {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error("Wallet missing");
   return ctx;
-}
-
-declare global {
-  interface Window {
-    ethereum?: {
-      request: (args: { method: string; params?: unknown[] }) => Promise<string>;
-    };
-  }
 }

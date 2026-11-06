@@ -1,5 +1,4 @@
 export const CHAIN_ID = 97;
-export const CHAIN_HEX = "0x61";
 export const RPC = "https://bsc-testnet-rpc.publicnode.com";
 
 export const ADDR = {
