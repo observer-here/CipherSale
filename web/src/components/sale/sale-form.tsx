@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { useWallet } from "@/hooks/wallet";
 import { ADDR } from "@/lib/chain";
-import { eth, parseEth } from "@/lib/format";
+import { eth, parseEth, txError } from "@/lib/format";
 import { fheFee } from "@/primus/fee";
 import { openFhe } from "@/primus/sdk";
 
@@ -32,15 +32,27 @@ export function SaleForm() {
 
   async function submit() {
     if (!provider) return setNote("Connect a wallet");
+    if (!token.trim()) return setNote("Enter the project token");
+    const startAt = Math.floor(new Date(start).getTime() / 1000);
+    const endAt = Math.floor(new Date(end).getTime() / 1000);
+    if (!Number.isFinite(startAt) || !Number.isFinite(endAt) || startAt >= endAt) return setNote("Set a start and a later end");
     setBusy(true);
     setNote("");
     try {
       const signer = await provider.getSigner();
       const me = await signer.getAddress();
       const hardCap = parseEth(hard);
+      const softCap = parseEth(soft);
+      const minContribution = parseEth(min);
+      const maxContribution = parseEth(max);
       const presaleRate = parseEth(rate);
       const listingRate = parseEth(listing);
-      const liquidityBps = BigInt(Math.round(Number(liquidity) * 100));
+      const liquidityPct = Number(liquidity);
+      if (!Number.isFinite(liquidityPct)) return setNote("Check the caps, limits, rate, and liquidity percent");
+      const liquidityBps = BigInt(Math.round(liquidityPct * 100));
+      if (liquidityBps > 10000n || softCap <= 0n || softCap > hardCap || minContribution <= 0n || minContribution > maxContribution || maxContribution > hardCap || presaleRate <= 0n) {
+        return setNote("Check the caps, limits, rate, and liquidity percent");
+      }
       const tokenPresale = (hardCap * presaleRate) / ONE;
       const listingPay = (hardCap * liquidityBps) / 10000n;
       const tokenLiquidity = listingPay === 0n ? 0n : (listingPay * listingRate) / ONE;
@@ -55,14 +67,14 @@ export function SaleForm() {
         tokenPresale,
         tokenLiquidity,
         liquidityBps,
-        softCap: parseEth(soft),
+        softCap,
         hardCap,
-        minContribution: parseEth(min),
-        maxContribution: parseEth(max),
+        minContribution,
+        maxContribution,
         presaleRate,
         listingRate: listingPay === 0n ? 0n : listingRate,
-        start: Math.floor(new Date(start).getTime() / 1000),
-        end: Math.floor(new Date(end).getTime() / 1000),
+        start: startAt,
+        end: endAt,
       };
       const sdk = await openFhe(provider);
       const fee = await fheFee(sdk, ADDR.ccht, "deposit");
@@ -76,7 +88,7 @@ export function SaleForm() {
         .find((item: { name?: string } | null) => item?.name === "SaleCreated");
       setNote(parsed ? `Sale ${parsed.args.sale}` : "Sale created");
     } catch (err) {
-      setNote(err instanceof Error ? err.message : "Create failed");
+      setNote(txError(err, "Create failed"));
     } finally {
       setBusy(false);
     }
@@ -95,7 +107,7 @@ export function SaleForm() {
   } catch { /* fields still being typed */ }
 
   return (
-    <form className="grid max-w-xl gap-5" onSubmit={(event) => { event.preventDefault(); submit(); }}>
+    <form className="form" onSubmit={(event) => { event.preventDefault(); submit(); }}>
       <Field label="Project token" value={token} onChange={setToken} />
       <Field label="zkTLS condition" value={condition} onChange={setCondition} />
       <Field label="Tokens per 1 cCHT" value={rate} onChange={setRate} />
@@ -107,9 +119,9 @@ export function SaleForm() {
       <Field label="Liquidity percent" value={liquidity} onChange={setLiquidity} />
       <Field label="Start" type="datetime-local" value={start} onChange={setStart} />
       <Field label="End" type="datetime-local" value={end} onChange={setEnd} />
-      <p className="text-sm text-white/60">The factory pulls <span className="mono text-[#9ff6ff]">{pull}</span>. Approve that amount, then one transaction deploys the confidential token and the sale.</p>
+      <p className="hint">The factory pulls <span className="mono">{pull}</span>. Approve that amount, then one transaction deploys the confidential token and the sale.</p>
       <Button disabled={busy} type="submit">{busy ? "Creating" : "Create sale"}</Button>
-      {note ? <p className="mono text-sm break-all">{note}</p> : null}
+      {note ? <p className="note mono">{note}</p> : null}
     </form>
   );
 }

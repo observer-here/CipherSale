@@ -11,7 +11,9 @@ export function cipher(handle: string) {
 }
 
 export function eth(value: bigint, digits = 18) {
-  return formatUnits(value, digits);
+  const text = formatUnits(value, digits);
+  if (!text.includes(".")) return text;
+  return text.replace(/0+$/, "").replace(/\.$/, "") || "0";
 }
 
 export function parseEth(value: string) {
@@ -20,4 +22,11 @@ export function parseEth(value: string) {
 
 export function when(unix: number) {
   return new Date(unix * 1000).toLocaleString();
+}
+
+export function txError(err: unknown, fallback: string) {
+  if (typeof err === "object" && err && "shortMessage" in err && typeof err.shortMessage === "string" && err.shortMessage) {
+    return err.shortMessage;
+  }
+  return err instanceof Error ? err.message : fallback;
 }

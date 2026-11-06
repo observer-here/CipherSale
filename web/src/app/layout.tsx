@@ -1,20 +1,22 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
-import { SiteFooter } from "@/components/layout/site-footer";
-import { SiteHeader } from "@/components/layout/site-header";
+import { Inter } from "next/font/google";
+import { Suspense, type ReactNode } from "react";
+import { AppShell } from "@/components/layout/app-shell";
 import { WalletProvider } from "@/hooks/wallet";
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600", "700"], display: "swap" });
 
 export const metadata: Metadata = { title: "CipherSale", description: "Confidential launchpad on Primus" };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className={inter.className}>
         <WalletProvider>
-          <SiteHeader />
-          <main>{children}</main>
-          <SiteFooter />
+          <Suspense fallback={null}>
+            <AppShell>{children}</AppShell>
+          </Suspense>
         </WalletProvider>
       </body>
     </html>

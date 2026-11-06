@@ -2,11 +2,11 @@
 
 import type { ButtonHTMLAttributes } from "react";
 
-export function Button({ className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      className={`border-b border-[#9ff6ff] pb-0.5 text-[#9ff6ff] disabled:cursor-default disabled:opacity-40 ${className}`}
-      {...props}
-    />
-  );
+export function Button({
+  variant = "solid",
+  className = "",
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "solid" | "ghost" | "text" }) {
+  const kind = variant === "ghost" ? "btn btn-ghost" : variant === "text" ? "btn btn-text" : "btn";
+  return <button className={`${kind} ${className}`} {...props} />;
 }

@@ -17,7 +17,7 @@ createAppKit({
   metadata: {
     name: "CipherSale",
     description: "Confidential sales on BNB testnet",
-    url: "http://localhost:3456",
+    url: "http://localhost:3000",
     icons: [],
   },
   features: { analytics: false, email: false, socials: false },

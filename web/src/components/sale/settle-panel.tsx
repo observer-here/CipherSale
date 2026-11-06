@@ -5,7 +5,8 @@ import { useState } from "react";
 import { cipherSaleAbi } from "@/abi/cipher-sale";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/wallet";
-import { cipher, eth } from "@/lib/format";
+import { cipher, eth, txError } from "@/lib/format";
+import { saleStatus } from "@/lib/read";
 import { decryptHandle } from "@/primus/decrypt";
 import { fheFee } from "@/primus/fee";
 import { openFhe } from "@/primus/sdk";
@@ -31,7 +32,7 @@ export function SettlePanel({ sale }: { sale: SaleView }) {
       await tx.wait();
       setNote(fn);
     } catch (err) {
-      setNote(err instanceof Error ? err.message : "Failed");
+      setNote(txError(err, "Failed"));
     } finally {
       setBusy(false);
     }
@@ -44,28 +45,29 @@ export function SettlePanel({ sale }: { sale: SaleView }) {
       const saleContract = new Contract(sale.address, cipherSaleAbi, provider);
       const handle = await saleContract.claimable(account);
       const sdk = await openFhe(provider);
-      const tokens = await decryptHandle(sdk, handle, sale.saleToken);
+      const tokens = await decryptHandle(sdk, handle, sale.address);
       setMine(`${eth(tokens)} ${sale.symbol}`);
     } catch (err) {
-      setMine(err instanceof Error ? err.message : "Cannot decrypt");
+      setMine(txError(err, "Cannot decrypt"));
     } finally {
       setBusy(false);
     }
   }
 
+  const closed = sale.canceled || saleStatus(sale) === "ended";
+
   return (
-    <div className="grid max-w-md gap-3 border-t border-white/15 pt-6 text-sm">
-      <h2 className="text-lg">After the window</h2>
-      <p>Raised <span className="mono text-[#9ff6ff]">{cipher(sale.raised)}</span></p>
-      <p className="text-white/60">Settle pays tokens if the hidden total cleared the soft cap. Otherwise it returns cCHT.</p>
-      <div className="flex flex-wrap gap-5">
-        <Button disabled={busy || !account} onClick={reveal}>Decrypt mine</Button>
-        <Button disabled={busy || !account} onClick={() => run("settle")}>Settle</Button>
-        {owner ? <Button disabled={busy} onClick={() => run("collect")}>Collect</Button> : null}
-        {owner ? <Button disabled={busy} onClick={() => run("cancel")}>Cancel</Button> : null}
+    <div className="stack">
+      <h2 style={{ margin: 0 }}>After the window</h2>
+      <p className="hint">Raised <span className="mono">{cipher(sale.raised)}</span>. Settle pays tokens if the hidden total cleared the soft cap. Otherwise it returns cCHT.</p>
+      <div className="row">
+        <Button variant="ghost" disabled={busy || !account} onClick={reveal}>Decrypt mine</Button>
+        <Button disabled={busy || !account || !closed} onClick={() => run("settle")}>Settle</Button>
+        {owner ? <Button variant="ghost" disabled={busy || !closed} onClick={() => run("collect")}>Collect</Button> : null}
+        {owner ? <Button variant="ghost" disabled={busy || closed} onClick={() => run("cancel")}>Cancel</Button> : null}
       </div>
-      {mine ? <p className="mono text-[#9ff6ff]">{mine}</p> : null}
-      {note ? <p>{note}</p> : null}
+      {mine ? <p className="note mono">{mine}</p> : null}
+      {note ? <p className="note">{note}</p> : null}
     </div>
   );
 }

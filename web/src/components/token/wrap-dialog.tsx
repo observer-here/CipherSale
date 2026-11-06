@@ -7,7 +7,7 @@ import { cipherTokenAbi } from "@/abi/cipher-token";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { ADDR } from "@/lib/chain";
-import { parseEth } from "@/lib/format";
+import { parseEth, txError } from "@/lib/format";
 import { fheFee } from "@/primus/fee";
 import { openFhe } from "@/primus/sdk";
 import { useWallet } from "@/hooks/wallet";
@@ -26,6 +26,7 @@ export function WrapDialog({ onDone }: { onDone: () => void }) {
       const signer = await provider.getSigner();
       const me = await signer.getAddress();
       const value = parseEth(amount);
+      if (value <= 0n) return setNote("Enter an amount");
       const cht = new Contract(ADDR.cht, chtAbi, signer);
       const ccht = new Contract(ADDR.ccht, cipherTokenAbi, signer);
       const allowance = await cht.allowance(me, ADDR.ccht);
@@ -40,18 +41,18 @@ export function WrapDialog({ onDone }: { onDone: () => void }) {
       setNote("Wrapped");
       onDone();
     } catch (err) {
-      setNote(err instanceof Error ? err.message : "Wrap failed");
+      setNote(txError(err, "Wrap failed"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="grid max-w-md gap-4">
-      <p className="text-sm text-white/70">Wrap CHT into cCHT. The confidential balance decrypts only for this wallet.</p>
+    <div className="stack">
+      <p className="hint">Wrap CHT into cCHT. The confidential balance decrypts only for this wallet.</p>
       <Field label="CHT amount" value={amount} onChange={setAmount} />
       <Button disabled={busy} onClick={wrap}>{busy ? "Wrapping" : "Wrap"}</Button>
-      {note ? <p className="text-sm">{note}</p> : null}
+      {note ? <p className="note">{note}</p> : null}
     </div>
   );
 }

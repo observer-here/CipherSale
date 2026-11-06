@@ -10,8 +10,10 @@ async function untilRevert(read: (index: number) => Promise<string>) {
   for (let i = 0; i < 50; i++) {
     try {
       out.push(await read(i));
-    } catch {
-      break;
+    } catch (err) {
+      const code = typeof err === "object" && err && "code" in err ? String(err.code) : "";
+      if (code === "CALL_EXCEPTION" || code === "BAD_DATA") break;
+      throw err;
     }
   }
   return out;

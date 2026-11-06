@@ -7,7 +7,8 @@ import { cipherTokenAbi } from "@/abi/cipher-token";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { useWallet } from "@/hooks/wallet";
-import { parseEth } from "@/lib/format";
+import { parseEth, txError } from "@/lib/format";
+import { saleStatus } from "@/lib/read";
 import { prove, toSaleAttestation } from "@/primus/attestation";
 import { encryptUint256 } from "@/primus/encrypt";
 import { fheFee } from "@/primus/fee";
@@ -22,6 +23,13 @@ export function BuyPanel({ sale }: { sale: SaleView }) {
 
   async function buy() {
     if (!provider || !account) return setNote("Connect a wallet");
+    let value: bigint;
+    try {
+      value = parseEth(amount);
+    } catch {
+      return setNote("Enter an amount");
+    }
+    if (value <= 0n) return setNote("Enter an amount");
     setBusy(true);
     setNote("Requesting zkTLS proof");
     try {
@@ -37,7 +45,7 @@ export function BuyPanel({ sale }: { sale: SaleView }) {
       }
       setNote("Encrypting amount");
       const sdk = await openFhe(provider);
-      const hidden = await encryptUint256(sdk, sale.address, account, parseEth(amount));
+      const hidden = await encryptUint256(sdk, sale.address, account, value);
       const fee = await fheFee(sdk, sale.address, "buy");
       const proof = [
         attestation.recipient,
@@ -55,24 +63,24 @@ export function BuyPanel({ sale }: { sale: SaleView }) {
       await tx.wait();
       setNote("Joined. The amount is a ciphertext.");
     } catch (err) {
-      setNote(err instanceof Error ? err.message : "Buy failed");
+      setNote(txError(err, "Buy failed"));
     } finally {
       setBusy(false);
     }
   }
 
-  const closed = !sale.funded || sale.canceled;
+  const closed = saleStatus(sale) !== "live" || !sale.funded;
   return (
-    <div className="grid max-w-md gap-4">
-      <h2 className="text-lg">Join</h2>
-      <ol className="grid gap-2 text-sm text-white/65">
-        <li>1. Primus extension proves the sale condition.</li>
-        <li>2. This wallet approves cCHT for the sale.</li>
-        <li>3. The amount is encrypted, then the sale takes it.</li>
+    <div className="stack">
+      <h2 style={{ margin: 0 }}>Join</h2>
+      <ol className="hint">
+        <li>Primus extension proves the sale condition.</li>
+        <li>This wallet approves cCHT for the sale.</li>
+        <li>The amount is encrypted, then the sale takes it.</li>
       </ol>
       <Field label="cCHT amount" value={amount} onChange={setAmount} />
       <Button disabled={busy || closed} onClick={buy}>{busy ? "Working" : closed ? "Sale closed" : "Contribute"}</Button>
-      {note ? <p className="text-sm leading-6">{note}</p> : null}
+      {note ? <p className="note">{note}</p> : null}
     </div>
   );
 }
