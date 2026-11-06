@@ -1,0 +1,20 @@
+{
+  "name": "ciphersale",
+  "private": true,
+  "scripts": {
+    "build": "hardhat compile",
+    "deploy": "hardhat run deploy/deploy.ts --network bnbTestnet"
+  },
+  "dependencies": {
+    "@primuslabs/fhe-contracts": "npm:nc97-fhe-contracts@0.1.0"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.1.0",
+    "@types/node": "^20.19.17",
+    "dotenv": "^17.2.1",
+    "ethers": "^6.15.0",
+    "hardhat": "^2.26.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
