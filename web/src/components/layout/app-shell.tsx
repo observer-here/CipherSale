@@ -4,20 +4,21 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { WalletMenu } from "@/components/layout/wallet-menu";
+import { Icon, paths } from "@/components/ui/icon";
 
 const platform = [
-  ["/", "Home", "M4 10.5 12 4l8 6.5V20H4z"],
-  ["/sales", "Explore Sales", "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M3 12h18 M12 3c2.5 2.8 3.8 5.8 3.8 9S14.5 18.2 12 21c-2.5-2.8-3.8-5.8-3.8-9S9.5 5.8 12 3z"],
-  ["/create-sale", "Create Sale", "M12 5v14M5 12h14"],
-  ["/verifications", "Verifications", "M12 3 5 6v6c0 4.2 2.8 6.8 7 8 4.2-1.2 7-3.8 7-8V6z"],
-  ["/purchases", "My Purchases", "M6 7h12l-1 13H7z M9 7V5a3 3 0 0 1 6 0v2"],
-  ["/analytics", "Analytics", "M5 19V9M12 19V5M19 19v-7"],
+  ["/", "Home", "M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"],
+  ["/sales", "Explore Sales", paths.layers],
+  ["/create-sale", "Create Sale", "M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z M12 8v8 M8 12h8"],
+  ["/verifications", "Verifications", paths.shield],
+  ["/purchases", "My Purchases", paths.wallet],
+  ["/assets", "Assets", "M7 8h12l-3-3 M17 16H5l3 3"],
 ];
 
 const resources = [
-  ["/docs", "Docs", "M7 3h8l4 4v14H7z M15 3v4h4"],
-  ["/integrations", "Integrations", "M8 8h8v8H8z M4 12h4M16 12h4M12 4v4M12 16v4"],
-  ["/support", "Support", "M12 21a9 9 0 1 0-9-9c0 2 .8 3.2 2 4.2V19l2.2-1.2c1.4.8 3 .12 4.8.12z"],
+  ["/docs", "Docs", "M4 5.5C6 4.5 9 4.5 12 6c3-1.5 6-1.5 8-.5V19c-2-1-5-1-8 .5-3-1.5-6-1.5-8-.5z M12 6v13.5"],
+  ["/integrations", "Integrations", "M10 4a2 2 0 1 1 4 0v1h4v4h-1a2 2 0 1 0 0 4h1v4h-4v-1a2 2 0 1 0-4 0v1H6v-4h1a2 2 0 1 0 0-4H6V5h4z"],
+  ["/support", "Support", "M4 14v-2a8 8 0 0 1 16 0v2 M4 14h3v5H5a1 1 0 0 1-1-1z M20 14h-3v5h2a1 1 0 0 0 1-1z M18 19c0 1.5-2 2-5 2"],
 ];
 
 function on(path: string, href: string) {
@@ -27,11 +28,18 @@ function on(path: string, href: string) {
   return path === href || path.startsWith(`${href}/`);
 }
 
-function Icon({ d }: { d: string }) {
+function NavGroup({ label, items, path, tight }: { label?: string; items: string[][]; path: string; tight?: boolean }) {
   return (
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7">
-      <path d={d} />
-    </svg>
+    <div className="nav-group">
+      {label ? <p className="nav-label">{label}</p> : null}
+      <nav className={tight ? "nav tight" : "nav"}>
+        {items.map(([href, text, d]) => (
+          <Link key={href} href={href} className={on(path, href) ? "active" : ""}>
+            <Icon d={d} size={18} /> {text}
+          </Link>
+        ))}
+      </nav>
+    </div>
   );
 }
 
@@ -55,7 +63,7 @@ function SearchBox() {
 
   return (
     <label className="search">
-      <Icon d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14z M20 20l-3.5-3.5" />
+      <Icon d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14z M20 20l-3.5-3.5" size={16} />
       <input
         ref={ref}
         value={q}
@@ -79,37 +87,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="app">
       <aside className="side">
         <Link href="/" className="brand">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6">
-            <path d="M4 15 10 3M8 15l6-12" />
+          <svg width="28" height="16" viewBox="0 0 28 16" fill="currentColor" aria-hidden>
+            <path d="M9.5 0H17l-6 16H3.5z M20 0h7.5l-6 16H14z" />
           </svg>
           CipherSale
         </Link>
-        <div>
-          <p className="nav-label">PLATFORM</p>
-          <nav className="nav">
-            {platform.map(([href, label, d]) => (
-              <Link key={href} href={href} className={on(path, href) ? "active" : ""}>
-                <Icon d={d} /> {label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-        <div>
-          <p className="nav-label">RESOURCES</p>
-          <nav className="nav">
-            {resources.map(([href, label, d]) => (
-              <Link key={href} href={href} className={on(path, href) ? "active" : ""}>
-                <Icon d={d} /> {label}
-              </Link>
-            ))}
-          </nav>
-        </div>
+        <NavGroup items={platform} path={path} />
+        <NavGroup label="RESOURCES" items={resources} path={path} tight />
         <div className="side-foot">
           <div className="net" title="CipherSale runs on BNB testnet only">
             <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden><path d="M8 1 14 8 8 15 2 8z" fill="#f0b90b" /></svg>
             <span>BNB Testnet</span>
             <i className="dot" />
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden><path d="M3.5 5.5 7 9l3.5-3.5" /></svg>
+            <Icon d={paths.chevron} size={14} />
           </div>
         </div>
       </aside>
@@ -117,7 +107,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <header className="top">
           <SearchBox />
           <button className="icon-btn" aria-label="Notices" onClick={() => setBell((open) => !open)}>
-            <Icon d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6z M10 19a2 2 0 0 0 4 0" />
+            <Icon d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6z M10 19a2 2 0 0 0 4 0" size={20} />
           </button>
           <WalletMenu />
           {bell ? (

@@ -44,11 +44,11 @@ export function SaleBoard({
         <div className="filters">
           {filters.map((item) => (
             <button key={item} className={item === filter ? "on" : ""} onClick={() => setFilter(item)}>
-              {item === "closed" ? "Closed" : item[0].toUpperCase() + item.slice(1)}
+              {item[0].toUpperCase() + item.slice(1)}
             </button>
           ))}
         </div>
-        {limit ? <Link href="/sales" className="view-all">View all →</Link> : <span />}
+        {limit ? <Link href="/sales" className="view-all">View All →</Link> : null}
       </div>
       {message ? <p className="empty">{message}</p> : null}
       <div className="cards">
