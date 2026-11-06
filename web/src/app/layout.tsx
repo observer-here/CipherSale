@@ -5,7 +5,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { WalletProvider } from "@/hooks/wallet";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600", "700"], display: "swap" });
+const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600", "700"], style: ["normal", "italic"], display: "swap" });
 
 export const metadata: Metadata = { title: "CipherSale", description: "Confidential launchpad on Primus" };
 

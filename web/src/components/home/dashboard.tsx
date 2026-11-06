@@ -4,91 +4,57 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { SaleBoard } from "@/components/sale/sale-board";
 import { useSales } from "@/components/sale/use-sales";
-import { useWallet } from "@/hooks/wallet";
 import { saleStatus } from "@/lib/read";
 
 function Icon({ d }: { d: string }) {
   return (
-    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7">
       <path d={d} />
     </svg>
   );
 }
 
 export function Dashboard() {
-  const { sales, state } = useSales();
-  const { account } = useWallet();
+  const { sales, proofs, state } = useSales();
   const query = useSearchParams().get("q") ?? "";
+  const ready = state === "ready";
   const live = sales.filter((sale) => saleStatus(sale) === "live").length;
-  const upcoming = sales.filter((sale) => saleStatus(sale) === "upcoming").length;
-  const closed = sales.length - live - upcoming;
+  const stats = [
+    ["M4 10h16v10H4z M8 10V7h8v3", ready ? String(live) : "—", "Active Sales"],
+    ["M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M16 10a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8z M3 19c.6-2.2 2.4-3.4 5-3.4s4.4 1.2 5 3.4 M14 15.7c1.4-.4 2.8.2 3.8 1.5", ready ? String(proofs) : "—", "Verified Participants"],
+    ["M12 3v18 M16.5 7.5H9.2a2.4 2.4 0 0 0 0 4.8h5.2a2.4 2.4 0 0 1 0 4.8H7.5", "Private", "Total Raised"],
+    ["M12 3 5 6.2v5.6c0 3.6 2.6 5.8 7 7.2 4.4-1.4 7-3.6 7-7.2V6.2z", "—", "Proof Success Rate"],
+  ];
 
   return (
     <div className="home">
-      <div>
-        <section className="hero">
-          <div>
-            <p className="kicker">PRIVATE TOKEN SALES</p>
-            <h1>Token Sales with zkTLS Verification</h1>
-            <p className="lede">Verify real-world eligibility and participate in token sales — without exposing your amount.</p>
-            <div className="actions">
-              <Link className="btn" href="/sales">Explore Sales</Link>
-              <Link className="btn btn-ghost" href="/create-sale">Create a Sale</Link>
-            </div>
-            <ul className="points">
-              <li><Icon d="M7 11V8a5 5 0 0 1 10 0v3 M6 11h12v9H6z" /> Private participation</li>
-              <li><Icon d="M13 3 6 13h5l-1 8 8-12h-5z" /> Verifiable eligibility</li>
-              <li><Icon d="M4 7h16v10H4z M8 7V5h8v2" /> On-chain settlement</li>
-            </ul>
+      <section className="hero">
+        <div className="hero-copy">
+          <p className="kicker"><span>PRIVATE TOKEN SALES</span><i /></p>
+          <h1>Token Sales with<br /><em>zkTLS Verification</em></h1>
+          <p className="lede">Verify real-world eligibility and participate in token sales — without exposing your data.</p>
+          <div className="actions">
+            <Link className="btn" href="/sales">Explore Sales →</Link>
+            <Link className="btn btn-ghost" href="/create-sale">Create a Sale</Link>
           </div>
-          <div className="hero-art" aria-hidden>
-            <div className="ring" />
-            <div className="lock">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-                <path d="M8 11V8a4 4 0 0 1 8 0v3 M6 11h12v9H6z" />
-              </svg>
-            </div>
-          </div>
-        </section>
-        <section className="stats">
-          <article className="stat"><span>Live now</span><b>{state === "ready" ? live : "—"}</b><em>Active sales</em></article>
-          <article className="stat"><span>Not started</span><b>{state === "ready" ? upcoming : "—"}</b><em>Upcoming</em></article>
-          <article className="stat"><span>Ended or canceled</span><b>{state === "ready" ? closed : "—"}</b><em>Closed</em></article>
-          <article className="stat"><span>Soft cap is private</span><b>Hidden</b><em>Total raised</em></article>
-        </section>
-        <SaleBoard sales={sales} state={state} query={query} limit={6} />
-      </div>
-      <aside className="rail">
-        <section className="verify">
-          <span className="pill">{account ? "Wallet connected" : "Not connected"}</span>
-          <h2>{account ? "Ready to prove" : "Connect to join"}</h2>
-          <p>zkTLS eligibility is checked per sale. The contribution amount stays a ciphertext.</p>
-          <Link className="btn" href={account ? "/sales" : "/verifications"}>{account ? "View sales" : "What you need"}</Link>
-        </section>
-        <section className="rail-card">
-          <h2 style={{ margin: "0 0 10px", fontSize: 16 }}>Quick Actions</h2>
-          <div className="quick">
-            <Link href="/sales">Participate in a sale</Link>
-            <Link href="/create-sale">Create token sale</Link>
-            <Link href="/verifications">Verify eligibility</Link>
-            <Link href="/analytics">View analytics</Link>
-          </div>
-        </section>
-        <section className="rail-card">
-          <div className="board-head"><h2 style={{ fontSize: 16 }}>Recent activity</h2></div>
-          <div className="activity">
-            {sales.length ? sales.slice(0, 4).map((sale) => (
-              <div key={sale.address}>
-                <span className="dot" />
-                <div>
-                  <Link href={`/sale/${sale.address}`}>{sale.name} listed</Link>
-                  <small>{saleStatus(sale)} · raised hidden</small>
-                </div>
-              </div>
-            )) : <p className="hint">No sales created yet.</p>}
-          </div>
-        </section>
-      </aside>
+        </div>
+        <img className="hero-photo" src="/hero-rocks.jpg" alt="" />
+        <ul className="points">
+          <li><Icon d="M8 11V8a4 4 0 0 1 8 0v3 M6 11h12v9H6z" /> Private Participation</li>
+          <li><Icon d="M13 3 6 14h5l-1 7 8-11h-5z" /> Verifiable Eligibility</li>
+          <li><Icon d="M4 8h16v9H4z M8 8V6h8v2 M8 12h8" /> On-chain Settlement</li>
+        </ul>
+      </section>
+      <section className="stats">
+        {stats.map(([icon, value, label]) => (
+          <article key={label} className="stat">
+            <span className="stat-icon"><Icon d={icon} /></span>
+            <b>{value}</b>
+            <span>{label}</span>
+          </article>
+        ))}
+      </section>
+      <SaleBoard sales={sales} state={state} query={query} limit={3} />
     </div>
   );
 }

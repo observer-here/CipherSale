@@ -14,6 +14,7 @@ export const cipherSaleAbi = [
   "function settle() payable",
   "function collect() payable",
   "function cancel()",
+  "event Eligible(address indexed buyer)",
 ] as const;
 
 export const erc20Abi = [

@@ -105,7 +105,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
         <div className="side-foot">
-          <div className="net"><span className="dot" /> BNB Testnet</div>
+          <div className="net" title="CipherSale runs on BNB testnet only">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden><path d="M8 1 14 8 8 15 2 8z" fill="#f0b90b" /></svg>
+            <span>BNB Testnet</span>
+            <i className="dot" />
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden><path d="M3.5 5.5 7 9l3.5-3.5" /></svg>
+          </div>
         </div>
       </aside>
       <div className="workspace">

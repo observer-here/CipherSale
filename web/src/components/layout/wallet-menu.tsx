@@ -52,11 +52,11 @@ export function WalletMenu() {
     }
   }
 
-  if (!account) return <button className="wallet-btn" onClick={connect}>Connect</button>;
+  if (!account) return <button className="wallet-btn" onClick={connect}><i />Connect</button>;
 
   return (
     <>
-      <button className="wallet-btn mono" onClick={() => setOpen((value) => !value)}>{short(account)}</button>
+      <button className="wallet-btn mono" onClick={() => setOpen((value) => !value)}><i />{short(account)}</button>
       {open ? (
         <div className="menu">
           <div className="balances">

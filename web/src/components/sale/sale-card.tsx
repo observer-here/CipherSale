@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { eth, short } from "@/lib/format";
+import { eth } from "@/lib/format";
 import { saleStatus } from "@/lib/read";
 import type { SaleView } from "@/types/sale";
 
@@ -15,28 +15,33 @@ function windowPct(sale: SaleView) {
 export function SaleCard({ sale }: { sale: SaleView }) {
   const status = saleStatus(sale);
   const pct = windowPct(sale);
-  const hue = parseInt(sale.address.slice(2, 8), 16) % 40;
+  const label = status === "ended" || status === "canceled" ? "Closed" : status[0].toUpperCase() + status.slice(1);
   return (
     <Link href={`/sale/${sale.address}`} className={`card ${status === "live" ? "live" : ""}`}>
-      <div className="card-art" style={{ background: `linear-gradient(145deg, hsl(${hue} 8% 18%), #111 46%, hsl(${hue + 20} 6% 32%))` }} />
+      <div className="card-art">
+        <span className={`flag ${status}`}>{label}</span>
+      </div>
       <div className="card-body">
-        <div className="card-top">
-          <span className={`pill ${status}`}>{status}</span>
-          <span className="mono" style={{ color: "#999", fontSize: 11 }}>{short(sale.address)}</span>
-        </div>
-        <div>
-          <h3>{sale.name}</h3>
-          <p>{sale.symbol} · pays with cCHT</p>
+        <div className="who">
+          <span className="avatar">{sale.symbol.slice(0, 1) || "S"}</span>
+          <div>
+            <h3>{sale.name}{sale.funded ? <i className="ok" /> : null}</h3>
+            <p>{sale.symbol}</p>
+          </div>
         </div>
         <div className="tags">
           <span>zkTLS</span>
+          <span>cCHT</span>
           <span>{Number(sale.liquidityBps) / 100}% liquidity</span>
         </div>
-        <div className="bar" title="Time through the sale window"><i style={{ width: `${pct}%` }} /></div>
+        <div className="bar-row">
+          <div className="bar" title="Time elapsed in the sale window"><i style={{ width: `${pct}%` }} /></div>
+          <span>{pct}%</span>
+        </div>
         <div className="metrics">
-          <div><b>{eth(sale.presaleRate)}</b><span>Per 1 cCHT</span></div>
-          <div><b>{eth(sale.hardCap)}</b><span>Hard cap</span></div>
-          <div><b>Hidden</b><span>Raised</span></div>
+          <div><b>{eth(sale.presaleRate)}</b><span>Token Price</span></div>
+          <div><b>{eth(sale.tokenPresale)}</b><span>Allocation</span></div>
+          <div><b>Private</b><span>Raised</span></div>
         </div>
       </div>
     </Link>
