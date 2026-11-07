@@ -27,13 +27,17 @@ export async function listSales(provider: Provider): Promise<SaleView[]> {
 
 export async function loadSale(provider: Provider, address: string): Promise<SaleView> {
   const sale = new Contract(address, cipherSaleAbi, provider);
-  const [owner, token, saleToken, funded, canceled, raised, options] = await Promise.all([
+  const [owner, token, saleToken, state, totalRaised, totalSold, listingId, listed, raised, tokensSold, options] = await Promise.all([
     sale.owner(),
     sale.token(),
     sale.saleToken(),
-    sale.funded(),
-    sale.canceled(),
+    sale.state(),
+    sale.totalRaised(),
+    sale.totalSold(),
+    sale.listingId(),
+    sale.listed(),
     sale.raised(),
+    sale.tokensSold(),
     sale.options(),
   ]);
   const bep20 = new Contract(token, bep20Abi, provider);
@@ -46,9 +50,13 @@ export async function loadSale(provider: Provider, address: string): Promise<Sal
     owner,
     token,
     saleToken,
-    funded,
-    canceled,
+    state: Number(state),
+    totalRaised,
+    totalSold,
+    listingId,
+    listed,
     raised,
+    tokensSold,
     name,
     symbol,
     tokenPresale: options[0],
@@ -65,11 +73,18 @@ export async function loadSale(provider: Provider, address: string): Promise<Sal
   };
 }
 
+// Contract states: 1 active, 2 finalizing, 3 refunding (soft cap missed or canceled), 4 succeeded.
 export function saleStatus(sale: SaleView, now = Math.floor(Date.now() / 1000)) {
-  if (sale.canceled) return "canceled";
+  if (sale.state === 2) return "finalizing";
+  if (sale.state === 3) return "refunding";
+  if (sale.state === 4) return "succeeded";
   if (now < sale.start) return "upcoming";
   if (now <= sale.end) return "live";
   return "ended";
+}
+
+export function isClosed(status: ReturnType<typeof saleStatus>) {
+  return status !== "live" && status !== "upcoming";
 }
 
 export async function confidentialBalance(provider: Provider, token: string, account: string) {

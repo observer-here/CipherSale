@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { useState } from "react";
 import { SaleCard } from "@/components/sale/sale-card";
-import { saleStatus } from "@/lib/read";
+import { isClosed, saleStatus } from "@/lib/read";
 import type { SaleView } from "@/types/sale";
 
 const filters = ["all", "live", "upcoming", "closed"] as const;
 
 function bucket(sale: SaleView) {
   const status = saleStatus(sale);
-  return status === "ended" || status === "canceled" ? "closed" : status;
+  return isClosed(status) ? "closed" : status;
 }
 
 export function SaleBoard({

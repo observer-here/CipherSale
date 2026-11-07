@@ -8,7 +8,7 @@ import { Field } from "@/components/ui/field";
 import { useWallet } from "@/hooks/wallet";
 import { ADDR, RPC } from "@/lib/chain";
 import { eth, parseEth, txError } from "@/lib/format";
-import { publicDecryptHandle } from "@/primus/decrypt";
+import { publicDecryptHandles } from "@/primus/decrypt";
 import { fheFee } from "@/primus/fee";
 import { openFhe } from "@/primus/sdk";
 
@@ -41,7 +41,7 @@ export function UnwrapDialog({ onDone }: { onDone: () => void }) {
     const signer = await provider.getSigner();
     const sdk = await openFhe(provider);
     setNote("Decrypting the burned amount");
-    const { amount: cleartext, proof } = await publicDecryptHandle(sdk, id);
+    const { values: [cleartext], proof } = await publicDecryptHandles(sdk, [id]);
     setNote("Releasing CHT");
     await (await new Contract(ADDR.ccht, cipherTokenAbi, signer).finalizeUnwrap(id, cleartext, proof)).wait();
   }

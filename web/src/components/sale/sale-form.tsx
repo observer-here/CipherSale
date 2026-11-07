@@ -9,10 +9,13 @@ import { Field } from "@/components/ui/field";
 import { useWallet } from "@/hooks/wallet";
 import { ADDR } from "@/lib/chain";
 import { eth, parseEth, txError } from "@/lib/format";
-import { fheFee } from "@/primus/fee";
-import { openFhe } from "@/primus/sdk";
 
 const ONE = 10n ** 18n;
+
+function localInput(date: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
 
 export function SaleForm() {
   const { provider } = useWallet();
@@ -25,8 +28,8 @@ export function SaleForm() {
   const [min, setMin] = useState("1");
   const [max, setMax] = useState("20");
   const [liquidity, setLiquidity] = useState("50");
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
+  const [start, setStart] = useState(() => localInput(new Date(Date.now() + 60_000)));
+  const [end, setEnd] = useState(() => localInput(new Date(Date.now() + 7 * 86_400_000)));
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -58,6 +61,8 @@ export function SaleForm() {
       const tokenLiquidity = listingPay === 0n ? 0n : (listingPay * listingRate) / ONE;
       const need = tokenPresale + tokenLiquidity;
       const bep20 = new Contract(token, bep20Abi, signer);
+      const balance = await bep20.balanceOf(me);
+      if (balance < need) return setNote(`This sale needs ${eth(need)} tokens. This wallet holds ${eth(balance)}.`);
       const allowance = await bep20.allowance(me, ADDR.saleFactory);
       if (allowance < need) {
         const approved = await bep20.approve(ADDR.saleFactory, need);
@@ -76,10 +81,8 @@ export function SaleForm() {
         start: startAt,
         end: endAt,
       };
-      const sdk = await openFhe(provider);
-      const fee = await fheFee(sdk, ADDR.ccht, "deposit");
       const factory = new Contract(ADDR.saleFactory, saleFactoryAbi, signer);
-      const tx = await factory.createSale(token, condition, Object.values(opts), { value: fee });
+      const tx = await factory.createSale(token, condition, Object.values(opts));
       const receipt = await tx.wait();
       const parsed = receipt.logs
         .map((log: { topics: string[]; data: string }) => {
@@ -119,7 +122,7 @@ export function SaleForm() {
       <Field label="Liquidity percent" value={liquidity} onChange={setLiquidity} />
       <Field label="Start" type="datetime-local" value={start} onChange={setStart} />
       <Field label="End" type="datetime-local" value={end} onChange={setEnd} />
-      <p className="hint">The factory pulls <span className="mono">{pull}</span>. Approve that amount, then one transaction deploys the confidential token and the sale.</p>
+      <p className="hint">The factory pulls <span className="mono">{pull}</span>. Approve that amount, then one transaction deploys the confidential token and the sale. Unsold tokens return at finalize.</p>
       <Button disabled={busy} type="submit">{busy ? "Creating" : "Create sale"}</Button>
       {note ? <p className="note mono">{note}</p> : null}
     </form>

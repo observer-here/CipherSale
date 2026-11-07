@@ -2,7 +2,7 @@
 
 import { JsonRpcProvider } from "ethers";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { BuyPanel } from "@/components/sale/buy-panel";
 import { SettlePanel } from "@/components/sale/settle-panel";
@@ -18,10 +18,11 @@ export default function SalePage() {
   const [sale, setSale] = useState<SaleView>();
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const reader = provider ?? new JsonRpcProvider(RPC);
-    loadSale(reader, params.address).then(setSale).catch(() => setError("This address is not a sale"));
+  const reload = useCallback(() => {
+    loadSale(provider ?? new JsonRpcProvider(RPC), params.address).then(setSale).catch(() => setError("This address is not a sale"));
   }, [provider, params.address]);
+
+  useEffect(reload, [reload]);
 
   if (!sale) return <p className="hint">{error || "Loading"}</p>;
 
@@ -46,7 +47,7 @@ export default function SalePage() {
       <div className="board-head">
         <div>
           <h1>{sale.name} <span style={{ color: "#888" }}>{sale.symbol}</span></h1>
-          <p className="hint">Payment is cCHT. Raised is hidden.</p>
+          <p className="hint">Payment is cCHT. Raised stays hidden until finalize.</p>
         </div>
         <span className={`pill ${status}`}>{status}</span>
       </div>
@@ -58,7 +59,7 @@ export default function SalePage() {
         </dl>
         <div className="stack">
           <div className="box"><BuyPanel sale={sale} /></div>
-          <div className="box"><SettlePanel sale={sale} /></div>
+          <div className="box"><SettlePanel sale={sale} onDone={reload} /></div>
         </div>
       </div>
     </section>

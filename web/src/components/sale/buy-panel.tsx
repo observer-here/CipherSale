@@ -69,7 +69,7 @@ export function BuyPanel({ sale }: { sale: SaleView }) {
     }
   }
 
-  const closed = saleStatus(sale) !== "live" || !sale.funded;
+  const closed = saleStatus(sale) !== "live";
   return (
     <div className="stack">
       <h2 style={{ margin: 0 }}>Join</h2>

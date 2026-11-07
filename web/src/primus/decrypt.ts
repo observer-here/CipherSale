@@ -14,9 +14,11 @@ export async function decryptHandle(sdk: FheTransformSDK, handle: string, contra
   return typeof plain?.value === "bigint" ? plain.value : 0n;
 }
 
-export async function publicDecryptHandle(sdk: FheTransformSDK, handle: string) {
-  const result = await sdk.publicDecrypt({ payloads: [handle] } as Parameters<FheTransformSDK["publicDecrypt"]>[0]);
-  const plain = Array.isArray(result.plaintexts) ? result.plaintexts[0] : result.plaintexts;
-  if (typeof plain?.value !== "bigint" || !result.decryptionProof) throw new Error("Decryption returned no proof");
-  return { amount: plain.value, proof: result.decryptionProof as string };
+// One proof covers every handle. The contract checks it against abi.encode of the values in the same order.
+export async function publicDecryptHandles(sdk: FheTransformSDK, handles: string[]) {
+  const result = await sdk.publicDecrypt({ payloads: handles } as Parameters<FheTransformSDK["publicDecrypt"]>[0]);
+  const plains = Array.isArray(result.plaintexts) ? result.plaintexts : [result.plaintexts];
+  const values = plains.map((plain) => plain?.value);
+  if (!values.every((value) => typeof value === "bigint") || !result.decryptionProof) throw new Error("Decryption returned no proof");
+  return { values: values as bigint[], proof: result.decryptionProof as string };
 }

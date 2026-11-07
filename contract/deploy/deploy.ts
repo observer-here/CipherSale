@@ -26,12 +26,20 @@ async function main() {
   const tokens = await ethers.deployContract("TokenFactory");
   await tokens.waitForDeployment();
 
-  const sales = await ethers.deployContract("CipherSaleFactory", [await ccht.getAddress(), PRIMUS_VERIFIER]);
+  const wrappers = await ethers.deployContract("CipherTokenFactory");
+  await wrappers.waitForDeployment();
+
+  const sales = await ethers.deployContract("CipherSaleFactory", [
+    await ccht.getAddress(),
+    PRIMUS_VERIFIER,
+    await wrappers.getAddress(),
+  ]);
   await sales.waitForDeployment();
 
   console.log(`CHT ${await cht.getAddress()}`);
   console.log(`cCHT ${await ccht.getAddress()}`);
   console.log(`TokenFactory ${await tokens.getAddress()}`);
+  console.log(`CipherTokenFactory ${await wrappers.getAddress()}`);
   console.log(`CipherSaleFactory ${await sales.getAddress()}`);
 }
 

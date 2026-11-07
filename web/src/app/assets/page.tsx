@@ -14,7 +14,9 @@ import { txError } from "@/lib/format";
 export default function AssetsPage() {
   const { account, provider, connect } = useWallet();
   const { cht, ccht, refresh } = useBalances();
+  const preview = process.env.NODE_ENV !== "production" && typeof window !== "undefined" && new URLSearchParams(window.location.search).has("preview");
   const [note, setNote] = useState("");
+  const [tab, setTab] = useState<"wrap" | "unwrap">("wrap");
 
   async function claim() {
     if (!provider) return;
@@ -35,25 +37,43 @@ export default function AssetsPage() {
         <div>
           <p className="kicker">WALLET</p>
           <h1>Assets</h1>
-          <p className="lede">CHT is the normal token. cCHT is its confidential version, and only this wallet can decrypt the balance.</p>
+          <p className="lede">Wrap CHT into cCHT to hide the balance, or unwrap it back. Only this wallet can decrypt cCHT.</p>
         </div>
       </div>
-      {!account ? <Button onClick={connect}>Connect</Button> : (
+      {!account && !preview ? (
+        <div className="box">
+          <p className="hint">Connect a wallet to see your CHT and cCHT balances.</p>
+          <Button onClick={connect}>Connect</Button>
+        </div>
+      ) : (
         <>
           <div className="split">
-            <div className="box"><span className="hint">CHT</span><b className="mono">{cht}</b></div>
-            <div className="box"><span className="hint">cCHT</span><b className="mono">{ccht}</b></div>
+            <div className="box">
+              <span className="hint">CHT · public</span>
+              <b className="balance">{preview ? "1,000" : cht}</b>
+              <span className="hint">BEP-20, visible on BscScan</span>
+            </div>
+            <div className="box">
+              <span className="hint">cCHT · confidential</span>
+              <b className="balance">{preview ? "250" : ccht}</b>
+              <span className="hint">Encrypted, decrypts for this wallet only</span>
+            </div>
           </div>
           <div className="box">
-            <WrapDialog onDone={() => refresh().catch(() => undefined)} />
-          </div>
-          <div className="box">
-            <UnwrapDialog onDone={() => refresh().catch(() => undefined)} />
+            <div className="filters">
+              <button className={tab === "wrap" ? "on" : ""} onClick={() => setTab("wrap")}>Wrap</button>
+              <button className={tab === "unwrap" ? "on" : ""} onClick={() => setTab("unwrap")}>Unwrap</button>
+            </div>
+            {tab === "wrap" ? (
+              <WrapDialog onDone={() => refresh().catch(() => undefined)} />
+            ) : (
+              <UnwrapDialog onDone={() => refresh().catch(() => undefined)} />
+            )}
           </div>
           <div className="row">
             <Button variant="ghost" onClick={claim}>Faucet 1,000 CHT</Button>
+            {note ? <span className="note">{note}</span> : null}
           </div>
-          {note ? <p className="note">{note}</p> : null}
         </>
       )}
     </section>

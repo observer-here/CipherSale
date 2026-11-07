@@ -27,7 +27,7 @@ export function SaleCard({ sale }: { sale: SaleView }) {
   const status = saleStatus(sale, now);
   const pct = windowPct(sale, now);
   const art = (parseInt(sale.address.slice(2, 4), 16) % 3) + 1;
-  const label = status === "ended" || status === "canceled" ? "Closed" : status[0].toUpperCase() + status.slice(1);
+  const label = status === "ended" ? "Closed" : status[0].toUpperCase() + status.slice(1);
   const liquidity = Number(sale.liquidityBps) / 100;
   return (
     <Link href={`/sale/${sale.address}`} className={`card${status === "live" ? " live" : ""}`}>
@@ -39,7 +39,7 @@ export function SaleCard({ sale }: { sale: SaleView }) {
         <div className="who">
           <span className="avatar">{sale.symbol.slice(0, 1) || "S"}</span>
           <div>
-            <h3>{sale.name}{sale.funded ? <i className="ok" title="Funded" /> : null}</h3>
+            <h3>{sale.name}{sale.state === 4 ? <i className="ok" title="Succeeded" /> : null}</h3>
             <p>{sale.symbol}</p>
           </div>
         </div>
@@ -59,7 +59,7 @@ export function SaleCard({ sale }: { sale: SaleView }) {
         <div className="metrics">
           <div><b>{eth(sale.presaleRate)}</b><span>Per cCHT</span></div>
           <div><b>{eth(sale.tokenPresale)}</b><span>Allocation</span></div>
-          <div><b>Private</b><span>Raised</span></div>
+          <div><b>{sale.totalRaised > 0n ? eth(sale.totalRaised) : "Private"}</b><span>Raised</span></div>
         </div>
       </div>
     </Link>

@@ -6,16 +6,19 @@ import {Attestation} from "./IPrimusZKTLS.sol";
 import {uve_uint256} from "../Uve.sol";
 
 interface ICipherSale {
-    event Funded(uint256 amount);
     event Eligible(address indexed buyer);
     event Bought(address indexed buyer, ve_uint256 paid);
+    event FinalizeRequested();
+    event Finalized(uint256 raised, uint256 sold);
+    event Failed();
     event Settled(address indexed buyer);
-    event Collected();
-    event Canceled();
+    event Listed(uint256 payment, uint256 tokens);
 
-    function fund() external payable;
     function buy(Attestation calldata attestation, uve_uint256 calldata encryptedAmount) external payable;
-    function settle() external payable;
-    function collect() external payable;
     function cancel() external;
+    function requestFinalize() external;
+    function finalize(uint256 raisedClear, uint256 soldClear, bytes calldata proof) external payable;
+    function settle() external payable;
+    function list() external payable;
+    function addLiquidity(bytes calldata proof) external;
 }

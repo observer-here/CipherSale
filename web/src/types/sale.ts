@@ -17,9 +17,13 @@ export type SaleView = SaleTerms & {
   owner: string;
   token: string;
   saleToken: string;
-  funded: boolean;
-  canceled: boolean;
+  state: number;
+  totalRaised: bigint;
+  totalSold: bigint;
+  listingId: string;
+  listed: boolean;
   raised: string;
+  tokensSold: string;
   name: string;
   symbol: string;
 };
