@@ -4,6 +4,7 @@ import path from "path";
 const ethersV5 = path.join(process.cwd(), "src/primus/ethers-v5.ts");
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
   webpack: (config, { webpack }) => {
     // The Primus FHE worker and Reown's viem build use dynamic requires. Webpack warns on every compile, harmlessly.
     config.ignoreWarnings = [
