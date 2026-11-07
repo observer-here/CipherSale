@@ -5,9 +5,8 @@ export default function CreateTokenPage() {
     <section className="page">
       <div className="page-head">
         <div>
-          <p className="kicker">PUBLIC TOKEN</p>
-          <h1>Create token</h1>
-          <p className="lede">This is the institution’s plain token. Supply is minted to the connected wallet. The sale wraps part of it later.</p>
+          <h1>Launch token</h1>
+          <p className="lede">Deploy a normal BEP-20. The supply is minted to the connected wallet.</p>
         </div>
       </div>
       <TokenForm />

@@ -1,16 +1,8 @@
-// Every FHE call must send the executor fee as msg.value.
-// SDK: estimateFheFee(contract, function, chainId).
-import type { FheTransformSDK } from "@primuslabs/fhetransform-sdk";
-import { CHAIN_ID } from "@/lib/chain";
+// Every FHE call sends the executor fee as msg.value and Primus keeps all of it, with no refund.
+// The SDK quote (estimateFheFee) prices one operation. buy runs many and reverts with InsufficientBalance() below
+// about 0.0025 tBNB in BNB testnet runs, so it carries headroom. The other calls pass at the SDK quote.
+import { parseEther } from "ethers";
 
-const FALLBACK = 2_000_000n * 1_000_000_000n;
+const FEES = { deposit: "0.00072", unwrap: "0.00072", settle: "0.00072", finalize: "0.00072", list: "0.00072", buy: "0.003" };
 
-export async function fheFee(sdk: FheTransformSDK, contract: string, fn: string) {
-  try {
-    const quote = await sdk.estimateFheFee(contract, fn, BigInt(CHAIN_ID));
-    if (quote.totalFee > 0n) return quote.totalFee;
-  } catch {
-    /* fee table may not know this function name */
-  }
-  return FALLBACK;
-}
+export const fheFee = (call: keyof typeof FEES) => parseEther(FEES[call]);

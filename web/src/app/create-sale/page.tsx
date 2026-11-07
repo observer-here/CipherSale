@@ -3,12 +3,11 @@ import { SaleForm } from "@/components/sale/sale-form";
 
 export default function CreateSalePage() {
   return (
-    <section className="page">
+    <section className="page" style={{ maxWidth: "1080px" }}>
       <div className="page-head">
         <div>
-          <p className="kicker">LAUNCH</p>
           <h1>Create a sale</h1>
-          <p className="lede">Buyers pay cCHT and prove a Spotify account. The factory locks the buyer allocation and the listing allocation. The condition must match that proof.</p>
+          <p className="lede">Buyers pay cCHT and prove Spotify account ownership. The factory locks the buyer allocation and the listing allocation.</p>
           <Link href="/create-token">Create the project token first</Link>
         </div>
       </div>

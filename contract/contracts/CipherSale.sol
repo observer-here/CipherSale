@@ -47,6 +47,7 @@ contract CipherSale is CipherConfig, ICipherSale {
     ICipherToken public saleToken;
     IBEP20 public token;
     bytes32 public conditionHash;
+    string public metadata;
     SaleOptions public options;
     uint8 public state;
     uint256 public totalRaised;
@@ -70,6 +71,7 @@ contract CipherSale is CipherConfig, ICipherSale {
         address projectToken,
         address owner_,
         string memory attConditions,
+        string memory metadata_,
         SaleOptions memory opts
     ) {
         require(
@@ -85,6 +87,7 @@ contract CipherSale is CipherConfig, ICipherSale {
         saleToken = ICipherToken(saleToken_);
         token = IBEP20(projectToken);
         conditionHash = keccak256(bytes(attConditions));
+        metadata = metadata_;
         options = opts;
         state = ACTIVE;
     }
@@ -224,10 +227,9 @@ contract CipherSale is CipherConfig, ICipherSale {
         if (eligible[msg.sender]) return;
         require(attestation.recipient == msg.sender, "recipient");
         require(keccak256(bytes(attestation.attConditions)) == conditionHash, "conditions");
-        require(
-            block.timestamp >= attestation.timestamp && block.timestamp - attestation.timestamp <= MAX_ATTESTATION_AGE,
-            "stale"
-        );
+        // The attestor signs the timestamp in milliseconds, so the struct cannot be rewritten in the browser.
+        uint256 issued = attestation.timestamp > 1e12 ? attestation.timestamp / 1000 : attestation.timestamp;
+        require(block.timestamp >= issued && block.timestamp - issued <= MAX_ATTESTATION_AGE, "stale");
         bytes32 id = keccak256(abi.encode(attestation));
         require(!usedAttestation[id], "used");
         primus.verifyAttestation(attestation);

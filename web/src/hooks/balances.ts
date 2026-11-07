@@ -10,28 +10,40 @@ import { confidentialBalance } from "@/lib/read";
 import { decryptHandle } from "@/primus/decrypt";
 import { openFhe } from "@/primus/sdk";
 
-// Decrypting cCHT starts the FHE SDK, so callers pass enabled=false until the balances are on screen.
-export function useBalances(enabled = true) {
+// Public CHT loads on its own. cCHT stays hidden until reveal(), because decryption starts the FHE SDK.
+export function useBalances(enabled = true, decrypt = true) {
   const { account, provider } = useWallet();
   const [cht, setCht] = useState("—");
   const [ccht, setCcht] = useState("—");
+  const [chtRaw, setChtRaw] = useState(0n);
+  const [cchtRaw, setCchtRaw] = useState(0n);
 
-  const refresh = useCallback(async () => {
-    if (!provider || !account) return;
-    setCht(eth(await new Contract(ADDR.cht, chtAbi, reader).balanceOf(account)));
+  const reveal = useCallback(async () => {
+    if (!provider || !account) return 0n;
     const handle = await confidentialBalance(reader, ADDR.ccht, account);
-    setCcht(cipher(handle));
     try {
       const sdk = await openFhe(provider);
-      setCcht(eth(await decryptHandle(sdk, handle, ADDR.ccht)));
+      const value = await decryptHandle(sdk, handle, ADDR.ccht);
+      setCchtRaw(value);
+      setCcht(eth(value));
+      return value;
     } catch {
       setCcht(cipher(handle));
+      return 0n;
     }
   }, [provider, account]);
+
+  const refresh = useCallback(async () => {
+    if (!account) return;
+    const raw = await new Contract(ADDR.cht, chtAbi, reader).balanceOf(account);
+    setChtRaw(raw);
+    setCht(eth(raw));
+    if (decrypt) await reveal();
+  }, [account, decrypt, reveal]);
 
   useEffect(() => {
     if (enabled) refresh().catch(() => undefined);
   }, [enabled, refresh]);
 
-  return { cht, ccht, refresh };
+  return { cht, ccht, chtRaw, cchtRaw, refresh, reveal };
 }

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { useWallet } from "@/hooks/wallet";
 import { reader } from "@/lib/chain";
-import { parseEth, txError } from "@/lib/format";
+import { eth, parseEth, txError } from "@/lib/format";
 import { saleStatus } from "@/lib/read";
 import { prove, toSaleAttestation } from "@/primus/attestation";
 import { encryptUint256 } from "@/primus/encrypt";
@@ -64,9 +64,8 @@ export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void 
       setNote("Encrypting amount");
       const sdk = await openFhe(provider);
       const hidden = await encryptUint256(sdk, sale.address, account, value);
-      const fee = await fheFee(sdk, sale.address, "buy");
       const saleContract = new Contract(sale.address, cipherSaleAbi, signer);
-      const tx = await saleContract.buy(proof, [hidden.handle, hidden.data], { value: fee });
+      const tx = await saleContract.buy(proof, [hidden.handle, hidden.data], { value: fheFee("buy") });
       await tx.wait();
       setNote("Joined. The amount is a ciphertext.");
       onDone();
@@ -80,13 +79,9 @@ export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void 
   const closed = saleStatus(sale) !== "live";
   return (
     <div className="stack">
-      <h2 style={{ margin: 0 }}>Join</h2>
-      <ol className="hint">
-        <li>Primus extension proves the sale condition.</li>
-        <li>This wallet approves cCHT for the sale.</li>
-        <li>The amount is encrypted, then the sale takes it.</li>
-      </ol>
-      <Field label="cCHT amount" value={amount} onChange={setAmount} />
+      <h2>Join</h2>
+      <p className="hint">The Primus extension proves Spotify account ownership, then this wallet pays encrypted cCHT.</p>
+      <Field label={`cCHT amount, ${eth(sale.minContribution)} to ${eth(sale.maxContribution)}`} value={amount} onChange={setAmount} />
       <Button disabled={busy || closed} onClick={buy}>{busy ? "Working" : closed ? "Sale closed" : "Contribute"}</Button>
       {note ? <p className="note">{note}</p> : null}
     </div>

@@ -1,15 +1,14 @@
 "use client";
 
-// Unwrap burns cCHT, then finalizeUnwrap releases CHT with the KMS proof. If step two fails, the request id
-// is kept in localStorage so it can be finished later. Public RPCs reject log scans from block 0.
+// Unwrap burns cCHT, then finalizeUnwrap releases CHT with the KMS proof.
+// A request that stops after the burn is kept in localStorage so it can be finished later.
 import { Contract } from "ethers";
 import { useCallback, useEffect, useState } from "react";
 import { cipherTokenAbi } from "@/abi/cipher-token";
 import { Button } from "@/components/ui/button";
-import { Field } from "@/components/ui/field";
 import { useWallet } from "@/hooks/wallet";
 import { ADDR, reader } from "@/lib/chain";
-import { parseEth, txError } from "@/lib/format";
+import { eth, parseEth, short, txError } from "@/lib/format";
 import { publicDecryptHandles } from "@/primus/decrypt";
 import { fheFee } from "@/primus/fee";
 import { openFhe } from "@/primus/sdk";
@@ -18,12 +17,26 @@ const ZERO = "0x0000000000000000000000000000000000000000";
 const key = (account: string) => `unwraps:${ADDR.ccht}:${account.toLowerCase()}`;
 const saved = (account: string): string[] => JSON.parse(localStorage.getItem(key(account)) ?? "[]");
 
-export function UnwrapDialog({ onDone }: { onDone: () => void }) {
+function preview(value: string) {
+  try { return eth(parseEth(value)); } catch { return "0"; }
+}
+
+export function UnwrapDialog({
+  balance,
+  onMax,
+  onDone,
+}: {
+  balance: bigint;
+  onMax: () => Promise<bigint>;
+  onDone: () => void;
+}) {
   const { account, provider } = useWallet();
-  const [amount, setAmount] = useState("100");
+  const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  const [bad, setBad] = useState(false);
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<string[]>([]);
+  const value = preview(amount);
 
   const loadPending = useCallback(async () => {
     if (!account) return;
@@ -51,11 +64,13 @@ export function UnwrapDialog({ onDone }: { onDone: () => void }) {
   async function run(work: () => Promise<void>, done: string) {
     setBusy(true);
     setNote("");
+    setBad(false);
     try {
       await work();
       setNote(done);
       onDone();
     } catch (err) {
+      setBad(true);
       setNote(txError(err, "Unwrap failed"));
     } finally {
       setBusy(false);
@@ -65,32 +80,43 @@ export function UnwrapDialog({ onDone }: { onDone: () => void }) {
 
   async function unwrap() {
     if (!provider || !account) return;
-    const value = parseEth(amount);
-    if (value <= 0n) return setNote("Enter an amount");
+    let wei: bigint;
+    try { wei = parseEth(amount); } catch { return setNote("Enter an amount"); }
+    if (wei <= 0n) return setNote("Enter an amount");
     await run(async () => {
       const signer = await provider.getSigner();
       const ccht = new Contract(ADDR.ccht, cipherTokenAbi, signer);
-      const sdk = await openFhe(provider);
       setNote("Burning cCHT");
-      const receipt = await (await ccht.unwrap(value, account, { value: await fheFee(sdk, ADDR.ccht, "unwrap") })).wait();
-      const event = receipt.logs.flatMap((log: { topics: string[]; data: string }) => ccht.interface.parseLog(log) ?? []).find((parsed: { name: string }) => parsed.name === "UnwrapRequested");
+      const receipt = await (await ccht.unwrap(wei, account, { value: fheFee("unwrap") })).wait();
+      const event = receipt.logs
+        .map((log: { topics: string[]; data: string }) => { try { return ccht.interface.parseLog(log); } catch { return null; } })
+        .find((parsed: { name: string } | null) => parsed?.name === "UnwrapRequested");
       if (!event) throw new Error("Unwrap request not found");
       localStorage.setItem(key(account), JSON.stringify([...saved(account), event.args.id]));
       await finalize(event.args.id);
+      setAmount("");
     }, "Unwrapped");
   }
 
   return (
     <div className="stack">
-      <p className="hint">Unwrap cCHT back into CHT. The burned amount is decrypted, then released on chain with a proof. You can only unwrap what you hold.</p>
-      <Field label="cCHT amount" value={amount} onChange={setAmount} />
-      <Button disabled={busy} onClick={unwrap}>{busy ? "Working" : "Unwrap"}</Button>
+      <div className="swap-top">
+        <span className="hint">Amount to unwrap</span>
+        <button type="button" onClick={async () => setAmount(eth(balance > 0n ? balance : await onMax()))}>Max</button>
+      </div>
+      <label className="amount">
+        <input placeholder="0.0" value={amount} onChange={(event) => setAmount(event.target.value)} />
+        <b>cCHT</b>
+      </label>
+      <p className="hint">You receive <b className="mono">{value} CHT</b>. 1 cCHT = 1 CHT.</p>
+      <p className="hint">Unwrap burns cCHT, then releases CHT after the decryption proof. Keep a little tBNB for the fee.</p>
+      <Button disabled={busy || value === "0"} onClick={unwrap}>{busy ? "Unwrapping" : "Unwrap cCHT to CHT"}</Button>
       {pending.map((id) => (
         <Button key={id} variant="ghost" disabled={busy} onClick={() => run(() => finalize(id), "Unwrapped")}>
-          Finish pending unwrap
+          Finish {short(id)}
         </Button>
       ))}
-      {note ? <p className="note">{note}</p> : null}
+      {note ? <p className={bad ? "note bad" : "note"}>{note}</p> : null}
     </div>
   );
 }

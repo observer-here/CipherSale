@@ -22,7 +22,7 @@ export function Dashboard() {
     [paths.layers, ready ? String(live) : "—", "Active Sales"],
     [people, ready ? String(proofs) : "—", "Verified Participants"],
     [coin, revealed > 0n ? `${eth(revealed)} cCHT` : "Private", "Total Raised"],
-    [paths.shield, "—", "Proof Success Rate"],
+    [paths.shield, ready ? String(sales.length) : "—", "Total Sales"],
   ];
 
   return (
@@ -30,7 +30,6 @@ export function Dashboard() {
       <section className="hero">
         <img className="hero-photo" src="/hero.jpg" alt="" />
         <div className="hero-copy">
-          <p className="kicker">PRIVATE TOKEN SALES<i /></p>
           <h1>Token Sales with<br /><em>zkTLS</em> Verification</h1>
           <p className="lede">Verify real-world eligibility and participate in token sales — without exposing your data.</p>
           <div className="actions">

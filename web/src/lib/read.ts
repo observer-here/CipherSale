@@ -3,6 +3,7 @@ import { cipherSaleAbi, bep20Abi } from "@/abi/cipher-sale";
 import { cipherTokenAbi } from "@/abi/cipher-token";
 import { saleFactoryAbi } from "@/abi/sale-factory";
 import { ADDR } from "@/lib/chain";
+import { parseMeta } from "@/lib/meta";
 import type { SaleView } from "@/types/sale";
 
 async function untilRevert(read: (index: number) => Promise<string>) {
@@ -27,7 +28,7 @@ export async function listSales(provider: Provider): Promise<SaleView[]> {
 
 export async function loadSale(provider: Provider, address: string): Promise<SaleView> {
   const sale = new Contract(address, cipherSaleAbi, provider);
-  const [owner, token, saleToken, state, totalRaised, totalSold, listingId, listed, buyers, raised, tokensSold, options] = await Promise.all([
+  const [owner, token, saleToken, state, totalRaised, totalSold, listingId, listed, buyers, raised, tokensSold, options, metadata] = await Promise.all([
     sale.owner(),
     sale.token(),
     sale.saleToken(),
@@ -40,11 +41,14 @@ export async function loadSale(provider: Provider, address: string): Promise<Sal
     sale.raised(),
     sale.tokensSold(),
     sale.options(),
+    sale.metadata(),
   ]);
   const bep20 = new Contract(token, bep20Abi, provider);
-  const [name, symbol] = await Promise.all([
+  const [name, symbol, decimals, totalSupply] = await Promise.all([
     bep20.name().catch(() => "Token"),
     bep20.symbol().catch(() => ""),
+    bep20.decimals().catch(() => 18n),
+    bep20.totalSupply().catch(() => 0n),
   ]);
   return {
     address,
@@ -61,6 +65,9 @@ export async function loadSale(provider: Provider, address: string): Promise<Sal
     tokensSold,
     name,
     symbol,
+    decimals: Number(decimals),
+    totalSupply,
+    meta: parseMeta(metadata),
     tokenPresale: options[0],
     tokenLiquidity: options[1],
     liquidityBps: options[2],

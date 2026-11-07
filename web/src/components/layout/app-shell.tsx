@@ -10,36 +10,27 @@ const platform = [
   ["/", "Home", "M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"],
   ["/sales", "Explore Sales", paths.layers],
   ["/create-sale", "Create Sale", "M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z M12 8v8 M8 12h8"],
-  ["/verifications", "Verifications", paths.shield],
+  ["/create-token", "Launch Token", "M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17z M8 12h8"],
   ["/purchases", "My Purchases", paths.wallet],
   ["/assets", "Assets", "M7 8h12l-3-3 M17 16H5l3 3"],
-];
-
-const resources = [
-  ["/docs", "Docs", "M4 5.5C6 4.5 9 4.5 12 6c3-1.5 6-1.5 8-.5V19c-2-1-5-1-8 .5-3-1.5-6-1.5-8-.5z M12 6v13.5"],
-  ["/integrations", "Integrations", "M10 4a2 2 0 1 1 4 0v1h4v4h-1a2 2 0 1 0 0 4h1v4h-4v-1a2 2 0 1 0-4 0v1H6v-4h1a2 2 0 1 0 0-4H6V5h4z"],
-  ["/support", "Support", "M4 14v-2a8 8 0 0 1 16 0v2 M4 14h3v5H5a1 1 0 0 1-1-1z M20 14h-3v5h2a1 1 0 0 0 1-1z M18 19c0 1.5-2 2-5 2"],
 ];
 
 function on(path: string, href: string) {
   if (href === "/") return path === "/";
   if (href === "/sales") return path === "/sales" || path.startsWith("/sale/");
-  if (href === "/create-sale") return path === "/create-sale" || path === "/create-token";
+  if (href === "/create-sale") return path === "/create-sale";
   return path === href || path.startsWith(`${href}/`);
 }
 
-function NavGroup({ label, items, path, tight }: { label?: string; items: string[][]; path: string; tight?: boolean }) {
+function Nav({ items, path }: { items: string[][]; path: string }) {
   return (
-    <div className="nav-group">
-      {label ? <p className="nav-label">{label}</p> : null}
-      <nav className={tight ? "nav tight" : "nav"}>
-        {items.map(([href, text, d]) => (
-          <Link key={href} href={href} className={on(path, href) ? "active" : ""}>
-            <Icon d={d} size={18} /> {text}
-          </Link>
-        ))}
-      </nav>
-    </div>
+    <nav className="nav">
+      {items.map(([href, text, d]) => (
+        <Link key={href} href={href} className={on(path, href) ? "active" : ""}>
+          <Icon d={d} size={18} /> {text}
+        </Link>
+      ))}
+    </nav>
   );
 }
 
@@ -96,10 +87,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </svg>
           CipherSale
         </Link>
-        <div className="side-nav">
-          <NavGroup items={platform} path={path} />
-          <NavGroup label="RESOURCES" items={resources} path={path} tight />
-        </div>
+        <Nav items={platform} path={path} />
         <div className="side-foot">
           <div className="net" title="CipherSale runs on BNB testnet only">
             <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden><path d="M8 1 14 8 8 15 2 8z" fill="#f0b90b" /></svg>

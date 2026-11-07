@@ -33,6 +33,11 @@ export const cipherSaleAbi = [
         "type": "string"
       },
       {
+        "internalType": "string",
+        "name": "metadata_",
+        "type": "string"
+      },
+      {
         "components": [
           {
             "internalType": "uint256",
@@ -577,6 +582,19 @@ export const cipherSaleAbi = [
         "internalType": "bytes32",
         "name": "",
         "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "metadata",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
       }
     ],
     "stateMutability": "view",

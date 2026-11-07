@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "build": "hardhat compile",
+    "abi": "node scripts/copy-abi.js",
     "deploy": "hardhat run deploy/deploy.ts --network bnbTestnet"
   },
   "dependencies": {

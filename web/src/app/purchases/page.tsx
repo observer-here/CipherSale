@@ -37,7 +37,6 @@ export default function PurchasesPage() {
     <section className="page" style={{ maxWidth: "none" }}>
       <div className="page-head">
         <div>
-          <p className="kicker">WALLET</p>
           <h1>My purchases</h1>
           <p className="lede">Sales you created, or where this wallet was marked eligible. Contribution sizes stay encrypted.</p>
         </div>

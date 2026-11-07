@@ -12,7 +12,6 @@ function Explore() {
     <div className="page" style={{ maxWidth: "none" }}>
       <div className="page-head">
         <div>
-          <p className="kicker">EXPLORE</p>
           <h1>Sales</h1>
           <p className="lede">Public terms are listed here. The amount raised stays encrypted.</p>
         </div>

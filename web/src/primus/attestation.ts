@@ -39,15 +39,15 @@ export async function prove(user: string): Promise<Proof> {
   return attestation;
 }
 
+// The attestor signs every field as emitted, so nothing here may be rewritten. The contract reads the timestamp in ms.
 export function toSaleAttestation(att: Proof) {
-  const stamp = Number(att.timestamp);
   return {
     recipient: att.recipient,
     request: att.request,
     reponseResolve: att.reponseResolve ?? [],
     data: att.data ?? "",
     attConditions: att.attConditions ?? "",
-    timestamp: stamp > 1_000_000_000_000 ? Math.floor(stamp / 1000) : stamp,
+    timestamp: att.timestamp,
     additionParams: att.additionParams ?? "",
     attestors: att.attestors ?? [],
     signatures: att.signatures ?? [],

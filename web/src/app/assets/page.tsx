@@ -13,16 +13,33 @@ import { txError } from "@/lib/format";
 
 export default function AssetsPage() {
   const { account, provider, connect } = useWallet();
-  const { cht, ccht, refresh } = useBalances();
-  const [note, setNote] = useState("");
+  const { cht, ccht, chtRaw, cchtRaw, refresh, reveal } = useBalances(Boolean(account), false);
   const [tab, setTab] = useState<"wrap" | "unwrap">("wrap");
+  const [shown, setShown] = useState(false);
+  const [eye, setEye] = useState(false);
+  const [note, setNote] = useState("");
+
+  async function done() {
+    await refresh();
+    if (shown) await reveal();
+  }
+
+  async function toggle() {
+    if (shown) return setShown(false);
+    setEye(true);
+    try {
+      await reveal();
+      setShown(true);
+    } finally {
+      setEye(false);
+    }
+  }
 
   async function claim() {
     if (!provider) return;
     setNote("");
     try {
-      const signer = await provider.getSigner();
-      await (await new Contract(ADDR.cht, chtAbi, signer).faucet()).wait();
+      await (await new Contract(ADDR.cht, chtAbi, await provider.getSigner()).faucet()).wait();
       setNote("1,000 CHT claimed");
       await refresh();
     } catch (err) {
@@ -34,46 +51,40 @@ export default function AssetsPage() {
     <section className="page">
       <div className="page-head">
         <div>
-          <p className="kicker">WALLET</p>
           <h1>Assets</h1>
-          <p className="lede">Wrap CHT into cCHT to hide the balance, or unwrap it back. Only this wallet can decrypt cCHT.</p>
+          <p className="lede">Wrap CHT into cCHT, or unwrap it back. 1 CHT = 1 cCHT.</p>
         </div>
       </div>
       {!account ? (
-        <div className="box">
-          <p className="hint">Connect a wallet to see your CHT and cCHT balances.</p>
+        <div className="box swap">
+          <p className="hint">Connect a wallet to wrap and unwrap.</p>
           <Button onClick={connect}>Connect</Button>
         </div>
       ) : (
-        <>
+        <div className="box swap">
           <div className="split">
-            <div className="box">
-              <span className="hint">CHT · public</span>
-              <b className="balance">{cht}</b>
-              <span className="hint">BEP-20, visible on BscScan</span>
+            <div>
+              <span className="hint">CHT balance</span>
+              <b className="balance mono">{cht}</b>
+              <button className="eye" type="button" onClick={claim}>Claim 1,000 CHT</button>
             </div>
-            <div className="box">
-              <span className="hint">cCHT · confidential</span>
-              <b className="balance">{ccht}</b>
-              <span className="hint">Encrypted, decrypts for this wallet only</span>
+            <div>
+              <span className="hint">cCHT balance</span>
+              <b className="balance mono">{shown ? ccht : "••••••"}</b>
+              <button className="eye" type="button" onClick={toggle}>{eye ? "Decrypting" : shown ? "Hide" : "Show"}</button>
             </div>
           </div>
-          <div className="box">
-            <div className="filters">
-              <button className={tab === "wrap" ? "on" : ""} onClick={() => setTab("wrap")}>Wrap</button>
-              <button className={tab === "unwrap" ? "on" : ""} onClick={() => setTab("unwrap")}>Unwrap</button>
-            </div>
-            {tab === "wrap" ? (
-              <WrapDialog onDone={() => refresh().catch(() => undefined)} />
-            ) : (
-              <UnwrapDialog onDone={() => refresh().catch(() => undefined)} />
-            )}
+          <div className="filters">
+            <button className={tab === "wrap" ? "on" : ""} type="button" onClick={() => setTab("wrap")}>Wrap CHT</button>
+            <button className={tab === "unwrap" ? "on" : ""} type="button" onClick={() => setTab("unwrap")}>Unwrap cCHT</button>
           </div>
-          <div className="row">
-            <Button variant="ghost" onClick={claim}>Faucet 1,000 CHT</Button>
-            {note ? <span className="note">{note}</span> : null}
-          </div>
-        </>
+          {tab === "wrap" ? (
+            <WrapDialog balance={chtRaw} onDone={() => done().catch(() => undefined)} />
+          ) : (
+            <UnwrapDialog balance={cchtRaw} onMax={async () => { const value = await reveal(); setShown(true); return value; }} onDone={() => done().catch(() => undefined)} />
+          )}
+          {note ? <p className="note">{note}</p> : null}
+        </div>
       )}
     </section>
   );

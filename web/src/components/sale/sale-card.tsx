@@ -43,6 +43,7 @@ export function SaleCard({ sale }: { sale: SaleView }) {
             <p>{sale.symbol}</p>
           </div>
         </div>
+        {sale.meta.description ? <p className="blurb">{sale.meta.description}</p> : null}
         <div className="tags">
           <span>zkTLS</span>
           <span>cCHT</span>

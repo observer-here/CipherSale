@@ -26,13 +26,14 @@ contract CipherSaleFactory {
     function createSale(
         address projectToken,
         string calldata attConditions,
+        string calldata metadata,
         CipherSale.SaleOptions calldata opts
     ) external returns (address sale) {
         IBEP20 token = IBEP20(projectToken);
         address ctoken = wrappers.create(
             string.concat("Confidential ", token.name()), string.concat("c", token.symbol()), projectToken
         );
-        sale = address(new CipherSale(primus, payment, ctoken, projectToken, msg.sender, attConditions, opts));
+        sale = address(new CipherSale(primus, payment, ctoken, projectToken, msg.sender, attConditions, metadata, opts));
         require(token.transferFrom(msg.sender, sale, opts.tokenPresale + opts.tokenLiquidity), "token");
         allSales.push(sale);
         salesByCreator[msg.sender].push(sale);

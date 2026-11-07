@@ -1,3 +1,5 @@
+import type { SaleMeta } from "@/lib/meta";
+
 export type SaleTerms = {
   tokenPresale: bigint;
   tokenLiquidity: bigint;
@@ -27,4 +29,7 @@ export type SaleView = SaleTerms & {
   tokensSold: string;
   name: string;
   symbol: string;
+  decimals: number;
+  totalSupply: bigint;
+  meta: SaleMeta;
 };

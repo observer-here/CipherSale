@@ -1,16 +1,15 @@
 "use client";
 
-// After the window: reveal totals with a KMS proof, then claim or refund. The owner can cancel while active
-// and, after success, unwrap the liquidity share and pair it on PancakeSwap.
+// After the window: finalize reveals the totals with a KMS proof, then buyers claim or refund.
+// The owner can cancel while the sale is open and, after success, list the liquidity share on PancakeSwap.
 import { Contract } from "ethers";
 import { useState } from "react";
 import { cipherSaleAbi } from "@/abi/cipher-sale";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/wallet";
-import { reader } from "@/lib/chain";
-import { cipher, eth, txError } from "@/lib/format";
+import { txError } from "@/lib/format";
 import { saleStatus } from "@/lib/read";
-import { decryptHandle, publicDecryptHandles } from "@/primus/decrypt";
+import { publicDecryptHandles } from "@/primus/decrypt";
 import { fheFee } from "@/primus/fee";
 import { openFhe } from "@/primus/sdk";
 import type { SaleView } from "@/types/sale";
@@ -24,10 +23,10 @@ const HINT = {
   succeeded: "The soft cap was met. Claim sends your confidential tokens.",
 };
 
-export function SettlePanel({ sale, onDone }: { sale: SaleView; onDone: () => void }) {
+export function Actions({ sale, onDone }: { sale: SaleView; onDone: () => void }) {
   const { account, provider } = useWallet();
-  const [mine, setMine] = useState("");
   const [note, setNote] = useState("");
+  const [bad, setBad] = useState(false);
   const [busy, setBusy] = useState(false);
   const status = saleStatus(sale);
   const owner = !!account && account.toLowerCase() === sale.owner.toLowerCase();
@@ -35,12 +34,14 @@ export function SettlePanel({ sale, onDone }: { sale: SaleView; onDone: () => vo
   async function run(label: string, work: (contract: Contract) => Promise<void>) {
     if (!provider) return setNote("Connect a wallet");
     setBusy(true);
+    setBad(false);
     setNote(label);
     try {
       await work(new Contract(sale.address, cipherSaleAbi, await provider.getSigner()));
       setNote("Done");
       onDone();
     } catch (err) {
+      setBad(true);
       setNote(txError(err, "Failed"));
     } finally {
       setBusy(false);
@@ -54,23 +55,21 @@ export function SettlePanel({ sale, onDone }: { sale: SaleView; onDone: () => vo
     }
     const sdk = await openFhe(provider!);
     const { values: [raised, sold], proof } = await publicDecryptHandles(sdk, [await contract.raised(), await contract.tokensSold()]);
-    const value = raised >= sale.softCap ? await fheFee(sdk, sale.saleToken, "deposit") : 0n;
+    const value = raised >= sale.softCap ? fheFee("finalize") : 0n;
     await (await contract.finalize(raised, sold, proof, { value })).wait();
   });
 
   const settle = () => run(status === "succeeded" ? "Claiming" : "Refunding", async (contract) => {
-    const fee = await fheFee(await openFhe(provider!), sale.address, "settle");
-    await (await contract.settle({ value: fee })).wait();
+    await (await contract.settle({ value: fheFee("settle") })).wait();
   });
 
   const addLiquidity = () => run("Listing on PancakeSwap", async (contract) => {
-    const sdk = await openFhe(provider!);
     let id = sale.listingId;
     if (BigInt(id) === 0n) {
-      await (await contract.list({ value: await fheFee(sdk, await contract.payment(), "unwrap") })).wait();
+      await (await contract.list({ value: fheFee("list") })).wait();
       id = await contract.listingId();
     }
-    const { proof } = await publicDecryptHandles(sdk, [id]);
+    const { proof } = await publicDecryptHandles(await openFhe(provider!), [id]);
     await (await contract.addLiquidity(proof)).wait();
   });
 
@@ -78,33 +77,11 @@ export function SettlePanel({ sale, onDone }: { sale: SaleView; onDone: () => vo
     await (await contract.cancel()).wait();
   });
 
-  async function reveal() {
-    if (!provider || !account) return;
-    setBusy(true);
-    try {
-      const contract = new Contract(sale.address, cipherSaleAbi, reader);
-      const sdk = await openFhe(provider);
-      const paid = await decryptHandle(sdk, await contract.contributions(account), sale.address);
-      const tokens = await decryptHandle(sdk, await contract.claimable(account), sale.address);
-      setMine(`Paid ${eth(paid)} cCHT for ${eth(tokens)} ${sale.symbol}`);
-    } catch (err) {
-      setMine(txError(err, "Cannot decrypt"));
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
-    <div className="stack">
-      <h2 style={{ margin: 0 }}>After the window</h2>
+    <div className="box">
+      <h2>Actions</h2>
       <p className="hint">{HINT[status]}</p>
-      <p className="hint">
-        {sale.totalRaised > 0n
-          ? `Raised ${eth(sale.totalRaised)} cCHT, sold ${eth(sale.totalSold)} ${sale.symbol}.`
-          : <>Raised <span className="mono">{cipher(sale.raised)}</span></>}
-      </p>
       <div className="row">
-        <Button variant="ghost" disabled={busy || !account} onClick={reveal}>Decrypt mine</Button>
         {status === "ended" || status === "finalizing" ? <Button disabled={busy || !account} onClick={finalize}>Finalize</Button> : null}
         {status === "succeeded" || status === "refunding" ? (
           <Button disabled={busy || !account} onClick={settle}>{status === "succeeded" ? "Claim tokens" : "Refund cCHT"}</Button>
@@ -112,10 +89,9 @@ export function SettlePanel({ sale, onDone }: { sale: SaleView; onDone: () => vo
         {owner && status === "succeeded" && sale.liquidityBps > 0n && !sale.listed ? (
           <Button variant="ghost" disabled={busy} onClick={addLiquidity}>Add liquidity</Button>
         ) : null}
-        {owner && (status === "live" || status === "upcoming") ? <Button variant="ghost" disabled={busy} onClick={cancel}>Cancel</Button> : null}
+        {owner && (status === "live" || status === "upcoming") ? <Button variant="ghost" disabled={busy} onClick={cancel}>Cancel sale</Button> : null}
       </div>
-      {mine ? <p className="note mono">{mine}</p> : null}
-      {note ? <p className="note">{note}</p> : null}
+      {note ? <p className={`note${bad ? " bad" : ""}`}>{note}</p> : null}
     </div>
   );
 }

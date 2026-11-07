@@ -84,6 +84,11 @@ export const saleFactoryAbi = [
         "type": "string"
       },
       {
+        "internalType": "string",
+        "name": "metadata",
+        "type": "string"
+      },
+      {
         "components": [
           {
             "internalType": "uint256",
