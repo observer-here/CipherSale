@@ -5,6 +5,12 @@ const ethersV5 = path.join(process.cwd(), "src/primus/ethers-v5.ts");
 
 const nextConfig: NextConfig = {
   webpack: (config, { webpack }) => {
+    // The Primus FHE worker and Reown's viem build use dynamic requires. Webpack warns on every compile, harmlessly.
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings ?? []),
+      { module: /@primuslabs[\\/]fhetransform-sdk|ox[\\/]_esm[\\/]tempo/ },
+      { message: /Circular dependency between chunks with runtime/ },
+    ];
     config.resolve.fallback = { ...config.resolve.fallback, fs: false, net: false, tls: false };
     config.resolve.alias = {
       ...config.resolve.alias,

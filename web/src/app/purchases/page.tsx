@@ -7,22 +7,23 @@ import { cipherSaleAbi } from "@/abi/cipher-sale";
 import { SaleCard } from "@/components/sale/sale-card";
 import { useSales } from "@/components/sale/use-sales";
 import { useWallet } from "@/hooks/wallet";
+import { reader } from "@/lib/chain";
 import type { SaleView } from "@/types/sale";
 
 export default function PurchasesPage() {
   const { sales, state } = useSales();
-  const { account, provider, connect } = useWallet();
+  const { account, connect } = useWallet();
   const [mine, setMine] = useState<SaleView[]>([]);
 
   useEffect(() => {
-    if (!account || !provider || !sales.length) {
+    if (!account || !sales.length) {
       setMine([]);
       return;
     }
     let stop = false;
     Promise.all(sales.map(async (sale) => {
       if (sale.owner.toLowerCase() === account.toLowerCase()) return sale;
-      const eligible = await new Contract(sale.address, cipherSaleAbi, provider).eligible(account);
+      const eligible = await new Contract(sale.address, cipherSaleAbi, reader).eligible(account);
       return eligible ? sale : null;
     })).then((rows) => {
       if (!stop) setMine(rows.filter((sale): sale is SaleView => sale !== null));
@@ -30,7 +31,7 @@ export default function PurchasesPage() {
       if (!stop) setMine([]);
     });
     return () => { stop = true; };
-  }, [account, provider, sales]);
+  }, [account, sales]);
 
   return (
     <section className="page" style={{ maxWidth: "none" }}>

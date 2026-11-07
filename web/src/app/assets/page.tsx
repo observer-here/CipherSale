@@ -14,7 +14,6 @@ import { txError } from "@/lib/format";
 export default function AssetsPage() {
   const { account, provider, connect } = useWallet();
   const { cht, ccht, refresh } = useBalances();
-  const preview = process.env.NODE_ENV !== "production" && typeof window !== "undefined" && new URLSearchParams(window.location.search).has("preview");
   const [note, setNote] = useState("");
   const [tab, setTab] = useState<"wrap" | "unwrap">("wrap");
 
@@ -40,7 +39,7 @@ export default function AssetsPage() {
           <p className="lede">Wrap CHT into cCHT to hide the balance, or unwrap it back. Only this wallet can decrypt cCHT.</p>
         </div>
       </div>
-      {!account && !preview ? (
+      {!account ? (
         <div className="box">
           <p className="hint">Connect a wallet to see your CHT and cCHT balances.</p>
           <Button onClick={connect}>Connect</Button>
@@ -50,12 +49,12 @@ export default function AssetsPage() {
           <div className="split">
             <div className="box">
               <span className="hint">CHT · public</span>
-              <b className="balance">{preview ? "1,000" : cht}</b>
+              <b className="balance">{cht}</b>
               <span className="hint">BEP-20, visible on BscScan</span>
             </div>
             <div className="box">
               <span className="hint">cCHT · confidential</span>
-              <b className="balance">{preview ? "250" : ccht}</b>
+              <b className="balance">{ccht}</b>
               <span className="hint">Encrypted, decrypts for this wallet only</span>
             </div>
           </div>

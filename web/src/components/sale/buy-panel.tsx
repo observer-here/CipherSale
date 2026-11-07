@@ -7,6 +7,7 @@ import { cipherTokenAbi } from "@/abi/cipher-token";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { useWallet } from "@/hooks/wallet";
+import { reader } from "@/lib/chain";
 import { parseEth, txError } from "@/lib/format";
 import { saleStatus } from "@/lib/read";
 import { prove, toSaleAttestation } from "@/primus/attestation";
@@ -15,7 +16,10 @@ import { fheFee } from "@/primus/fee";
 import { openFhe } from "@/primus/sdk";
 import type { SaleView } from "@/types/sale";
 
-export function BuyPanel({ sale }: { sale: SaleView }) {
+// The contract checks the attestation only on a wallet's first buy, so later buys send an empty one.
+const NO_PROOF = ["0x0000000000000000000000000000000000000000", ["", "", "", ""], [], "", "", 0, "", [], []];
+
+export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void }) {
   const { account, provider } = useWallet();
   const [amount, setAmount] = useState("1");
   const [note, setNote] = useState("");
@@ -31,11 +35,25 @@ export function BuyPanel({ sale }: { sale: SaleView }) {
     }
     if (value <= 0n) return setNote("Enter an amount");
     setBusy(true);
-    setNote("Requesting zkTLS proof");
     try {
       const signer = await provider.getSigner();
-      const attestation = toSaleAttestation(await prove(account));
-      const saleRead = new Contract(sale.address, cipherSaleAbi, provider);
+      const saleRead = new Contract(sale.address, cipherSaleAbi, reader);
+      let proof: unknown[] = NO_PROOF;
+      if (!(await saleRead.eligible(account))) {
+        setNote("Requesting zkTLS proof");
+        const att = toSaleAttestation(await prove(account));
+        proof = [
+          att.recipient,
+          [att.request.url, att.request.header, att.request.method, att.request.body],
+          att.reponseResolve.map((row) => [row.keyName, row.parseType, row.parsePath]),
+          att.data,
+          att.attConditions,
+          att.timestamp,
+          att.additionParams,
+          att.attestors.map((row) => [row.attestorAddr, row.url]),
+          att.signatures,
+        ];
+      }
       const payment = new Contract(await saleRead.payment(), cipherTokenAbi, signer);
       const allowed = await payment.operators(account, sale.address);
       if (!allowed) {
@@ -47,21 +65,11 @@ export function BuyPanel({ sale }: { sale: SaleView }) {
       const sdk = await openFhe(provider);
       const hidden = await encryptUint256(sdk, sale.address, account, value);
       const fee = await fheFee(sdk, sale.address, "buy");
-      const proof = [
-        attestation.recipient,
-        [attestation.request.url, attestation.request.header, attestation.request.method, attestation.request.body],
-        attestation.reponseResolve.map((row: { keyName: string; parseType: string; parsePath: string }) => [row.keyName, row.parseType, row.parsePath]),
-        attestation.data,
-        attestation.attConditions,
-        attestation.timestamp,
-        attestation.additionParams,
-        attestation.attestors.map((row: { attestorAddr: string; url: string }) => [row.attestorAddr, row.url]),
-        attestation.signatures,
-      ];
       const saleContract = new Contract(sale.address, cipherSaleAbi, signer);
       const tx = await saleContract.buy(proof, [hidden.handle, hidden.data], { value: fee });
       await tx.wait();
       setNote("Joined. The amount is a ciphertext.");
+      onDone();
     } catch (err) {
       setNote(txError(err, "Buy failed"));
     } finally {

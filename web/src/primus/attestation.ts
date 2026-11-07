@@ -1,7 +1,8 @@
 // zkTLS in the browser. Docs: https://docs.primuslabs.xyz/enterprise/zk-tls-sdk/zktls-js-sdk-api
 // init(appId) talks to the Primus extension. sign() stays on the server because it needs appSecret.
 // startAttestation returns the Attestation struct CipherSale.buy verifies on chain.
-import { PrimusZKTLS } from "@primuslabs/zktls-js-sdk";
+// The SDK is imported on first use so the sale page does not download it until a buyer joins.
+import type { PrimusZKTLS } from "@primuslabs/zktls-js-sdk";
 
 type Proof = {
   recipient: string;
@@ -23,7 +24,7 @@ export async function prove(user: string): Promise<Proof> {
   if (!appId || !template) {
     throw new Error("Set NEXT_PUBLIC_PRIMUS_APP_ID and NEXT_PUBLIC_PRIMUS_TEMPLATE_ID");
   }
-  if (!client) client = new PrimusZKTLS();
+  if (!client) client = new (await import("@primuslabs/zktls-js-sdk")).PrimusZKTLS();
   await client.init(appId);
   const request = client.generateRequestParams(template, user);
   const res = await fetch("/api/primus/sign", {

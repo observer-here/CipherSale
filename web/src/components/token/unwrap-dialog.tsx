@@ -1,35 +1,37 @@
 "use client";
 
-import { Contract, JsonRpcProvider } from "ethers";
+// Unwrap burns cCHT, then finalizeUnwrap releases CHT with the KMS proof. If step two fails, the request id
+// is kept in localStorage so it can be finished later. Public RPCs reject log scans from block 0.
+import { Contract } from "ethers";
 import { useCallback, useEffect, useState } from "react";
 import { cipherTokenAbi } from "@/abi/cipher-token";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { useWallet } from "@/hooks/wallet";
-import { ADDR, RPC } from "@/lib/chain";
-import { eth, parseEth, txError } from "@/lib/format";
+import { ADDR, reader } from "@/lib/chain";
+import { parseEth, txError } from "@/lib/format";
 import { publicDecryptHandles } from "@/primus/decrypt";
 import { fheFee } from "@/primus/fee";
 import { openFhe } from "@/primus/sdk";
 
-type Pending = { id: string; amount: bigint };
+const ZERO = "0x0000000000000000000000000000000000000000";
+const key = (account: string) => `unwraps:${ADDR.ccht}:${account.toLowerCase()}`;
+const saved = (account: string): string[] => JSON.parse(localStorage.getItem(key(account)) ?? "[]");
 
 export function UnwrapDialog({ onDone }: { onDone: () => void }) {
   const { account, provider } = useWallet();
   const [amount, setAmount] = useState("100");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
-  const [pending, setPending] = useState<Pending[]>([]);
+  const [pending, setPending] = useState<string[]>([]);
 
   const loadPending = useCallback(async () => {
     if (!account) return;
-    const ccht = new Contract(ADDR.ccht, cipherTokenAbi, new JsonRpcProvider(RPC));
-    const logs = await ccht.queryFilter(ccht.filters.UnwrapRequested(account), 0, "latest");
-    const rows = await Promise.all(logs.map(async (log) => {
-      const { id, amount: value } = (log as unknown as { args: { id: string; amount: bigint } }).args;
-      return (await ccht.unwrapTo(id)) === "0x0000000000000000000000000000000000000000" ? null : { id, amount: value };
-    }));
-    setPending(rows.filter((row): row is Pending => row !== null));
+    const ccht = new Contract(ADDR.ccht, cipherTokenAbi, reader);
+    const open = (await Promise.all(saved(account).map(async (id) => ((await ccht.unwrapTo(id)) === ZERO ? null : id))))
+      .filter((id): id is string => id !== null);
+    localStorage.setItem(key(account), JSON.stringify(open));
+    setPending(open);
   }, [account]);
 
   useEffect(() => {
@@ -62,7 +64,7 @@ export function UnwrapDialog({ onDone }: { onDone: () => void }) {
   }
 
   async function unwrap() {
-    if (!provider) return;
+    if (!provider || !account) return;
     const value = parseEth(amount);
     if (value <= 0n) return setNote("Enter an amount");
     await run(async () => {
@@ -70,9 +72,10 @@ export function UnwrapDialog({ onDone }: { onDone: () => void }) {
       const ccht = new Contract(ADDR.ccht, cipherTokenAbi, signer);
       const sdk = await openFhe(provider);
       setNote("Burning cCHT");
-      const receipt = await (await ccht.unwrap(value, await signer.getAddress(), { value: await fheFee(sdk, ADDR.ccht, "unwrap") })).wait();
+      const receipt = await (await ccht.unwrap(value, account, { value: await fheFee(sdk, ADDR.ccht, "unwrap") })).wait();
       const event = receipt.logs.flatMap((log: { topics: string[]; data: string }) => ccht.interface.parseLog(log) ?? []).find((parsed: { name: string }) => parsed.name === "UnwrapRequested");
       if (!event) throw new Error("Unwrap request not found");
+      localStorage.setItem(key(account), JSON.stringify([...saved(account), event.args.id]));
       await finalize(event.args.id);
     }, "Unwrapped");
   }
@@ -82,9 +85,9 @@ export function UnwrapDialog({ onDone }: { onDone: () => void }) {
       <p className="hint">Unwrap cCHT back into CHT. The burned amount is decrypted, then released on chain with a proof. You can only unwrap what you hold.</p>
       <Field label="cCHT amount" value={amount} onChange={setAmount} />
       <Button disabled={busy} onClick={unwrap}>{busy ? "Working" : "Unwrap"}</Button>
-      {pending.map((row) => (
-        <Button key={row.id} variant="ghost" disabled={busy} onClick={() => run(() => finalize(row.id), "Unwrapped")}>
-          Finish pending unwrap of {eth(row.amount)}
+      {pending.map((id) => (
+        <Button key={id} variant="ghost" disabled={busy} onClick={() => run(() => finalize(id), "Unwrapped")}>
+          Finish pending unwrap
         </Button>
       ))}
       {note ? <p className="note">{note}</p> : null}

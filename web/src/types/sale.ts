@@ -22,6 +22,7 @@ export type SaleView = SaleTerms & {
   totalSold: bigint;
   listingId: string;
   listed: boolean;
+  buyers: number;
   raised: string;
   tokensSold: string;
   name: string;

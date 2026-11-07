@@ -53,6 +53,7 @@ contract CipherSale is CipherConfig, ICipherSale {
     uint256 public totalSold;
     bytes32 public listingId;
     bool public listed;
+    uint256 public buyers;
 
     ve_uint256 public raised;
     ve_uint256 public tokensSold;
@@ -232,6 +233,7 @@ contract CipherSale is CipherConfig, ICipherSale {
         primus.verifyAttestation(attestation);
         usedAttestation[id] = true;
         eligible[msg.sender] = true;
+        buyers++;
         emit Eligible(msg.sender);
     }
 }

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { cipherSaleAbi } from "@/abi/cipher-sale";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/wallet";
+import { reader } from "@/lib/chain";
 import { cipher, eth, txError } from "@/lib/format";
 import { saleStatus } from "@/lib/read";
 import { decryptHandle, publicDecryptHandles } from "@/primus/decrypt";
@@ -81,7 +82,7 @@ export function SettlePanel({ sale, onDone }: { sale: SaleView; onDone: () => vo
     if (!provider || !account) return;
     setBusy(true);
     try {
-      const contract = new Contract(sale.address, cipherSaleAbi, provider);
+      const contract = new Contract(sale.address, cipherSaleAbi, reader);
       const sdk = await openFhe(provider);
       const paid = await decryptHandle(sdk, await contract.contributions(account), sale.address);
       const tokens = await decryptHandle(sdk, await contract.claimable(account), sale.address);

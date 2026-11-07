@@ -7,6 +7,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
     "@primuslabs/fhetransform-sdk": "0.4.5",
     "@primuslabs/zktls-js-sdk": "0.3.15",
     "@reown/appkit": "^1.8.24",

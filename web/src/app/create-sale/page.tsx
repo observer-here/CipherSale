@@ -8,7 +8,7 @@ export default function CreateSalePage() {
         <div>
           <p className="kicker">LAUNCH</p>
           <h1>Create a sale</h1>
-          <p className="lede">Buyers pay cCHT. The rate is project tokens per 1 cCHT. The zkTLS condition must match the Primus template.</p>
+          <p className="lede">Buyers pay cCHT and prove a Spotify account. The factory locks the buyer allocation and the listing allocation. The condition must match that proof.</p>
           <Link href="/create-token">Create the project token first</Link>
         </div>
       </div>

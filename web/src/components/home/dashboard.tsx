@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { SaleBoard } from "@/components/sale/sale-board";
 import { useSales } from "@/components/sale/use-sales";
 import { Icon, paths } from "@/components/ui/icon";
+import { eth } from "@/lib/format";
 import { saleStatus } from "@/lib/read";
 
 const people = "M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M16.5 10a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z M3 19c.6-2.4 2.5-3.6 5-3.6s4.4 1.2 5 3.6 M14.5 15.6c1.5-.4 3 .2 4 1.6";
@@ -16,10 +17,11 @@ export function Dashboard() {
   const query = useSearchParams().get("q") ?? "";
   const ready = state === "ready";
   const live = sales.filter((sale) => saleStatus(sale) === "live").length;
+  const revealed = sales.reduce((sum, sale) => sum + sale.totalRaised, 0n);
   const stats = [
     [paths.layers, ready ? String(live) : "—", "Active Sales"],
     [people, ready ? String(proofs) : "—", "Verified Participants"],
-    [coin, "Private", "Total Raised"],
+    [coin, revealed > 0n ? `${eth(revealed)} cCHT` : "Private", "Total Raised"],
     [paths.shield, "—", "Proof Success Rate"],
   ];
 

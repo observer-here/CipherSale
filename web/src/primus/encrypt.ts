@@ -2,9 +2,10 @@
 // SDK: FheTransformSDK.encrypt → { handle, data }. That pair is uve_uint256 on chain.
 // https://www.npmjs.com/package/@primuslabs/fhetransform-sdk
 import { getAddress } from "ethers";
-import { FheType, type FheTransformSDK } from "@primuslabs/fhetransform-sdk";
+import type { FheTransformSDK } from "@primuslabs/fhetransform-sdk";
 
 export async function encryptUint256(sdk: FheTransformSDK, contract: string, user: string, value: bigint) {
+  const { FheType } = await import("@primuslabs/fhetransform-sdk");
   const { encryptedValues } = await sdk.encrypt({
     payloads: [{ value, fheType: FheType.ve_uint256 }],
     contractAddress: getAddress(contract),
