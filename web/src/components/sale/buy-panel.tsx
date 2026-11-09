@@ -1,7 +1,7 @@
 "use client";
 
 import { Contract } from "ethers";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cipherSaleAbi } from "@/abi/cipher-sale";
 import { cipherTokenAbi } from "@/abi/cipher-token";
 import { Button } from "@/components/ui/button";
@@ -18,12 +18,46 @@ import type { SaleView } from "@/types/sale";
 
 // The contract checks the attestation only on a wallet's first buy, so later buys send an empty one.
 const NO_PROOF = ["0x0000000000000000000000000000000000000000", ["", "", "", ""], [], "", "", 0, "", [], []];
+const STEPS = [
+  ["Spotify", "Opens in the Primus extension"],
+  ["Approve", "Allow this sale to pull cCHT"],
+  ["Pay", "The amount stays encrypted"],
+] as const;
+
+function Spotify() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden>
+      <path fill="currentColor" d="M12 0a12 12 0 1 0 .01 24A12 12 0 0 0 12 0zm5.5 17.34c-.24.36-.66.48-1.02.24-2.82-1.74-6.36-2.1-10.56-1.14-.42.12-.78-.18-.9-.54-.12-.42.18-.78.54-.9 4.56-1.02 8.52-.6 11.64 1.32.42.18.48.66.3 1.02zm1.44-3.3c-.3.42-.84.6-1.26.3-3.24-1.98-8.16-2.58-11.94-1.38-.48.12-1.02-.12-1.14-.6-.12-.48.12-1.02.6-1.14 4.32-1.26 9.72-.66 13.38 1.56.42.24.54.78.36 1.26zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.3c-.6.18-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.72 1.62.54.3.72 1.02.42 1.56-.3.42-1.02.6-1.56.3z" />
+    </svg>
+  );
+}
 
 export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void }) {
   const { account, provider } = useWallet();
   const [amount, setAmount] = useState("1");
   const [note, setNote] = useState("");
+  const [bad, setBad] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [step, setStep] = useState(0);
+  const [proved, setProved] = useState(false);
+  const [allowed, setAllowed] = useState(false);
+
+  useEffect(() => {
+    if (!account) return;
+    const saleRead = new Contract(sale.address, cipherSaleAbi, reader);
+    let live = true;
+    (async () => {
+      try {
+        const isIn = await saleRead.eligible(account);
+        const payment = new Contract(await saleRead.payment(), cipherTokenAbi, reader);
+        const ok = await payment.operators(account, sale.address);
+        if (!live) return;
+        setProved(Boolean(isIn));
+        setAllowed(Boolean(ok));
+      } catch { /* wallet not ready */ }
+    })();
+    return () => { live = false; };
+  }, [account, sale.address]);
 
   async function buy() {
     if (!provider || !account) return setNote("Connect a wallet");
@@ -35,12 +69,14 @@ export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void 
     }
     if (value <= 0n) return setNote("Enter an amount");
     setBusy(true);
+    setBad(false);
+    setNote("");
     try {
       const signer = await provider.getSigner();
       const saleRead = new Contract(sale.address, cipherSaleAbi, reader);
       let proof: unknown[] = NO_PROOF;
       if (!(await saleRead.eligible(account))) {
-        setNote("Requesting zkTLS proof");
+        setStep(1);
         const att = toSaleAttestation(await prove(account));
         proof = [
           att.recipient,
@@ -53,23 +89,24 @@ export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void 
           att.attestors.map((row) => [row.attestorAddr, row.url]),
           att.signatures,
         ];
+        setProved(true);
       }
       const payment = new Contract(await saleRead.payment(), cipherTokenAbi, signer);
-      const allowed = await payment.operators(account, sale.address);
-      if (!allowed) {
-        setNote("Approving cCHT");
-        const tx = await payment.setOperator(sale.address, true);
-        await tx.wait();
+      if (!(await payment.operators(account, sale.address))) {
+        setStep(2);
+        await (await payment.setOperator(sale.address, true)).wait();
+        setAllowed(true);
       }
-      setNote("Encrypting amount");
+      setStep(3);
       const sdk = await openFhe(provider);
       const hidden = await encryptUint256(sdk, sale.address, account, value);
       const saleContract = new Contract(sale.address, cipherSaleAbi, signer);
-      const tx = await saleContract.buy(proof, [hidden.handle, hidden.data], { value: fheFee("buy") });
-      await tx.wait();
+      await (await saleContract.buy(proof, [hidden.handle, hidden.data], { value: fheFee("buy") })).wait();
+      setStep(4);
       setNote("Joined. The amount is a ciphertext.");
       onDone();
     } catch (err) {
+      setBad(true);
       setNote(txError(err, "Buy failed"));
     } finally {
       setBusy(false);
@@ -77,13 +114,34 @@ export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void 
   }
 
   const closed = saleStatus(sale) !== "live";
+  const mark = (n: number) => {
+    if (step >= 4 || n < step) return "done";
+    if (n === step) return bad ? "bad" : "on";
+    if (step === 0 && ((n === 1 && proved) || (n === 2 && allowed))) return "done";
+    return "";
+  };
+
   return (
     <div className="stack">
       <h2>Join</h2>
-      <p className="hint">The Primus extension proves Spotify account ownership, then this wallet pays encrypted cCHT.</p>
+      <ol className="steps">
+        {STEPS.map(([title, detail], index) => {
+          const n = index + 1;
+          const state = mark(n);
+          return (
+            <li key={title} className={state}>
+              <span>{n === 1 ? <Spotify /> : state === "done" ? "✓" : n}</span>
+              <div>
+                <b>{n === 1 ? (sale.meta.gate || title) : title}</b>
+                <small>{detail}</small>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
       <Field label={`cCHT amount, ${eth(sale.minContribution)} to ${eth(sale.maxContribution)}`} value={amount} onChange={setAmount} />
       <Button disabled={busy || closed} onClick={buy}>{busy ? "Working" : closed ? "Sale closed" : "Contribute"}</Button>
-      {note ? <p className="note">{note}</p> : null}
+      {note ? <p className={bad ? "note bad" : "note"}>{note}</p> : null}
     </div>
   );
 }

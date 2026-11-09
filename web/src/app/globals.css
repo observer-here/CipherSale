@@ -117,12 +117,13 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
   background: #fff;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
 }
+.menu.tight { width: auto; padding: 8px; }
 .menu p { margin: 0 0 8px; }
 .content { padding: 30px 16px 48px 28px; }
 
 /* Hero */
-.hero { position: relative; min-height: 302px; }
-.hero-photo { position: absolute; top: -76px; left: 26%; width: 72%; max-width: 900px; mix-blend-mode: multiply; pointer-events: none; }
+.hero { position: relative; min-height: 268px; }
+.hero-photo { position: absolute; top: -112px; left: 26%; width: 72%; max-width: 900px; mix-blend-mode: multiply; pointer-events: none; }
 .hero-copy { position: relative; z-index: 1; }
 .hero h1 { margin: 0; font-size: 39px; font-weight: 700; letter-spacing: -0.04em; line-height: 49px; }
 .hero h1 em {
@@ -137,7 +138,7 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
 .points li + li { border-left: 1px solid #dcdcd8; }
 
 /* Stats */
-.stats { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); height: 68px; margin-top: 32px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255, 255, 255, 0.7); }
+.stats { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); height: 68px; margin-top: 12px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255, 255, 255, 0.7); }
 .stat { position: relative; display: flex; align-items: center; gap: 14px; padding: 0 22px; }
 .stat + .stat::before { content: ""; position: absolute; top: 16px; bottom: 16px; left: 0; width: 1px; background: var(--line); }
 .stat b { display: block; font-size: 20px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; }
@@ -215,7 +216,6 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
 .lede { margin: 12px 0 0; color: #555; font-size: 15px; line-height: 21px; }
 .hint { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
 .note { margin: 0; color: var(--green); font-size: 13px; word-break: break-all; }
-.balances { display: flex; gap: 16px; margin-bottom: 10px; font-size: 14px; }
 .balance { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; }
 .swap { max-width: 440px; }
 .swap .balance { font-size: 22px; }
@@ -237,6 +237,16 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
 .sale-head .tags { margin-top: 6px; }
 .sale-head .pill { margin-left: auto; }
 .box h2 { margin: 0; font-size: 16px; font-weight: 700; }
+.steps { display: grid; margin: 0; padding: 0; list-style: none; }
+.steps li { position: relative; display: grid; grid-template-columns: 28px 1fr; column-gap: 12px; padding-bottom: 16px; }
+.steps li:last-child { padding-bottom: 0; }
+.steps li:not(:last-child)::before { content: ""; position: absolute; top: 28px; bottom: 0; left: 13px; width: 1px; background: var(--line); }
+.steps li > span { display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid var(--line); border-radius: 99px; color: #888; font-size: 12px; font-weight: 700; }
+.steps b { display: block; margin-top: 4px; font-size: 13px; line-height: 16px; }
+.steps small { color: var(--muted); font-size: 12px; }
+.steps .on > span, .steps .done > span { border-color: var(--ink); background: var(--ink); color: #fff; }
+.steps .done > span { border-color: var(--lime); background: var(--lime); color: var(--ink); }
+.steps .bad > span { border-color: #b42318; background: #fff; color: #b42318; }
 .about { margin: 0; color: #333; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
 .count { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; }
 .count div { padding: 10px 0; border: 1px solid var(--line); border-radius: 10px; }
@@ -282,14 +292,14 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
 
   .hero { display: flex; min-height: 0; flex-direction: column; }
   .hero-copy { order: 1; }
-  .hero-photo { position: static; order: 2; width: 100%; max-width: 560px; margin: 8px auto -8px; }
+  .hero-photo { position: static; order: 2; width: 100%; max-width: 560px; margin: -12px auto -16px; }
   .points { order: 3; flex-wrap: wrap; gap: 10px 24px; margin-top: 8px; }
   .points li, .points li + li { padding: 0; border-left: 0; }
   .hero h1 { margin-top: 16px; font-size: 32px; line-height: 40px; }
   .lede { max-width: none; }
   .actions { flex-wrap: wrap; }
 
-  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); height: auto; margin-top: 24px; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); height: auto; margin-top: 12px; }
   .stat { padding: 14px 16px; }
   .stat + .stat::before { display: none; }
   .stat:nth-child(even)::before { display: block; }
@@ -310,6 +320,5 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
   .stat small { font-size: 11px; }
   .page-head h1 { font-size: 22px; }
   .sheet div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
-  .balances { flex-direction: column; gap: 4px; }
   .wallet-btn { padding: 0 12px; }
 }
