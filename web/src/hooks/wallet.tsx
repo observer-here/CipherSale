@@ -1,31 +1,45 @@
 "use client";
 
-// Reown AppKit, created once. A reload must not build a second kit or wipe the connected wallet.
+// Reown AppKit. createAppKit keeps the existing kit, so a reload does not open a second one.
 import { createAppKit, useAppKit, useAppKitAccount, useAppKitProvider, useDisconnect } from "@reown/appkit/react";
 import { EthersAdapter } from "@reown/appkit-adapter-ethers";
 import { bscTestnet } from "@reown/appkit/networks";
+import { StorageUtil } from "@reown/appkit-controllers/utils";
 import { BrowserProvider, type Eip1193Provider } from "ethers";
 import { createContext, useContext, useMemo, useRef, type ReactNode } from "react";
 import { CHAIN_ID } from "@/lib/chain";
 
-const root = globalThis as typeof globalThis & { __cipherKit?: true };
+// AppKit drops the saved tBNB balance every 30s and logs it. Keep the saved balance.
+StorageUtil.cacheExpiry.nativeBalance = Number.MAX_SAFE_INTEGER;
+StorageUtil.cacheExpiry.portfolio = Number.MAX_SAFE_INTEGER;
+StorageUtil.getNativeBalanceCacheForCaipAddress = (caipAddress) => {
+  try {
+    return StorageUtil.getNativeBalanceCache()[caipAddress];
+  } catch {
+    return undefined;
+  }
+};
+StorageUtil.getBalanceCacheForCaipAddress = (caipAddress) => {
+  try {
+    return StorageUtil.getBalanceCache()[caipAddress]?.balance;
+  } catch {
+    return undefined;
+  }
+};
 
-if (!root.__cipherKit) {
-  createAppKit({
-    adapters: [new EthersAdapter()],
-    networks: [bscTestnet],
-    defaultNetwork: bscTestnet,
-    projectId: process.env.NEXT_PUBLIC_REOWN_PROJECT_ID ?? "",
-    metadata: {
-      name: "CipherSale",
-      description: "Confidential sales on BNB testnet",
-      url: typeof window === "undefined" ? "http://localhost:3000" : window.location.origin,
-      icons: [],
-    },
-    features: { analytics: false, email: false, socials: false },
-  });
-  root.__cipherKit = true;
-}
+createAppKit({
+  adapters: [new EthersAdapter()],
+  networks: [bscTestnet],
+  defaultNetwork: bscTestnet,
+  projectId: process.env.NEXT_PUBLIC_REOWN_PROJECT_ID ?? "",
+  metadata: {
+    name: "CipherSale",
+    description: "Confidential sales on BNB testnet",
+    url: typeof window === "undefined" ? "http://localhost:3000" : window.location.origin,
+    icons: [],
+  },
+  features: { analytics: false, email: false, socials: false },
+});
 
 type Wallet = {
   account?: string;
