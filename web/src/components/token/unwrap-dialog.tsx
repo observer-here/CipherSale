@@ -1,7 +1,5 @@
 "use client";
 
-// Unwrap burns cCHT, then finalizeUnwrap releases CHT with the KMS proof.
-// A request that stops after the burn is kept in localStorage so it can be finished later.
 import { Contract } from "ethers";
 import { useCallback, useEffect, useState } from "react";
 import { cipherTokenAbi } from "@/abi/cipher-token";

@@ -1,5 +1,4 @@
-// @primuslabs/zktls-js-sdk calls ethers v5 `ethers.utils`. This app uses ethers v6.
-// next.config redirects only that package's `ethers` import to this file.
+// zkTLS SDK expects ethers v5 utils. next.config points that package's ethers import here.
 import { Wallet, isAddress, keccak256, recoverAddress, solidityPacked } from "ethers";
 
 export const ethers = {

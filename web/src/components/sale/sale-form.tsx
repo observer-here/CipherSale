@@ -1,6 +1,5 @@
 "use client";
 
-// Four-step sale form. Preview numbers are the same terms the factory locks in.
 import { Contract, isAddress } from "ethers";
 import Link from "next/link";
 import { useEffect, useState } from "react";

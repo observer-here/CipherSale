@@ -10,7 +10,6 @@ import { confidentialBalance } from "@/lib/read";
 import { decryptHandle } from "@/primus/decrypt";
 import { openFhe } from "@/primus/sdk";
 
-// Public CHT loads on its own. cCHT stays hidden until reveal(), because decryption starts the FHE SDK.
 export function useBalances(enabled = true, decrypt = true) {
   const { account, provider } = useWallet();
   const [cht, setCht] = useState("—");

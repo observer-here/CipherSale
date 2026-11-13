@@ -1,7 +1,4 @@
-// zkTLS in the browser. Docs: https://docs.primuslabs.xyz/enterprise/zk-tls-sdk/zktls-js-sdk-api
-// init(appId) talks to the Primus extension. sign() stays on the server because it needs appSecret.
-// startAttestation returns the Attestation struct CipherSale.buy verifies on chain.
-// The SDK is imported on first use so the sale page does not download it until a buyer joins.
+// Browser zkTLS. The extension signs the request; appSecret stays in /api/primus/sign.
 import { keccak256, toUtf8Bytes } from "ethers";
 
 type Proof = {
@@ -36,15 +33,12 @@ export async function prove(user: string): Promise<Proof> {
   return (await sdk.startAttestation(body.signed)) as Proof;
 }
 
-// CipherSale stores keccak256(attConditions). The sale contract checks the attestor signature.
 export function assertSaleProof(conditionHash: string, att: ReturnType<typeof toSaleAttestation>) {
   if (keccak256(toUtf8Bytes(att.attConditions)).toLowerCase() !== conditionHash.toLowerCase()) {
     throw new Error("This sale locked a different check. Create a new sale, then join that one.");
   }
 }
 
-// The attestor signs every field as emitted, so nothing here may be rewritten. The contract reads the timestamp in ms.
-// A signature without 0x is still the same 65 bytes. The Solidity verifier rejects it unless it is hex.
 export function toSaleAttestation(att: Proof) {
   return {
     recipient: att.recipient,

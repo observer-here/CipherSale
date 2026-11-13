@@ -1,5 +1,3 @@
-// Server-side PrimusZKTLS.sign. The docs say appSecret must not ship in frontend code.
-// https://docs.primuslabs.xyz/enterprise/zk-tls-sdk/zktls-js-sdk-api
 import { NextResponse } from "next/server";
 import { PrimusZKTLS } from "@primuslabs/zktls-js-sdk";
 

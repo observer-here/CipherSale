@@ -82,7 +82,6 @@ export async function loadSale(provider: Provider, address: string): Promise<Sal
   };
 }
 
-// Contract states: 1 active, 2 finalizing, 3 refunding (soft cap missed or canceled), 4 succeeded.
 export function saleStatus(sale: SaleView, now = Math.floor(Date.now() / 1000)) {
   if (sale.state === 2) return "finalizing";
   if (sale.state === 3) return "refunding";

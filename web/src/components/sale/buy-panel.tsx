@@ -17,7 +17,6 @@ import { fheFee } from "@/primus/fee";
 import { openFhe } from "@/primus/sdk";
 import type { SaleView } from "@/types/sale";
 
-// The contract checks the attestation only on a wallet's first buy, so later buys send an empty one.
 const NO_PROOF = ["0x0000000000000000000000000000000000000000", ["", "", "", ""], [], "", "", 0, "", [], []];
 const STEPS = [
   ["Spotify", "Opens in the Primus extension"],

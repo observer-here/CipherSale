@@ -1,4 +1,3 @@
-// Sale description and links. Stored on chain as one JSON string in CipherSale.metadata.
 const KEYS = ["description", "website", "telegram", "twitter", "gate"] as const;
 
 export type SaleMeta = Record<(typeof KEYS)[number], string>;

@@ -1,6 +1,4 @@
-// FHETransform browser client.
-// https://fhetransform.primuslabs.xyz/ — encrypt locally, Jazz returns the handle, userDecrypt reads an ACL-allowed handle.
-// The SDK is imported on first use so pages that never touch FHE do not download it.
+// FHE client. Loaded on first encrypt or decrypt.
 import type { BrowserProvider } from "ethers";
 
 export async function openFhe(provider: BrowserProvider) {

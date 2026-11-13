@@ -1,6 +1,4 @@
-// Encrypts a uint256 for the contract that will call verifyAttestation.
-// SDK: FheTransformSDK.encrypt → { handle, data }. That pair is uve_uint256 on chain.
-// https://www.npmjs.com/package/@primuslabs/fhetransform-sdk
+// encrypt() returns { handle, data }, the uve_uint256 the sale buy call expects.
 import { getAddress } from "ethers";
 import type { FheTransformSDK } from "@primuslabs/fhetransform-sdk";
 

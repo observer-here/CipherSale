@@ -5,7 +5,6 @@ import { reader } from "@/lib/chain";
 import { listSales } from "@/lib/read";
 import type { SaleView } from "@/types/sale";
 
-// A short shared cache, so moving between pages shows sales instantly instead of re-reading the chain.
 const FRESH_MS = 20_000;
 
 type Snapshot = { sales: SaleView[]; at: number };

@@ -1,6 +1,5 @@
 "use client";
 
-// Reown AppKit. createAppKit keeps the existing kit, so a reload does not open a second one.
 import { createAppKit, useAppKit, useAppKitAccount, useAppKitProvider, useDisconnect } from "@reown/appkit/react";
 import { EthersAdapter } from "@reown/appkit-adapter-ethers";
 import { bscTestnet } from "@reown/appkit/networks";
@@ -9,7 +8,7 @@ import { BrowserProvider, type Eip1193Provider } from "ethers";
 import { createContext, useContext, useMemo, useRef, type ReactNode } from "react";
 import { CHAIN_ID } from "@/lib/chain";
 
-// AppKit drops the saved tBNB balance every 30s and logs it. Keep the saved balance.
+// AppKit otherwise drops the saved tBNB balance every 30s.
 StorageUtil.cacheExpiry.nativeBalance = Number.MAX_SAFE_INTEGER;
 StorageUtil.cacheExpiry.portfolio = Number.MAX_SAFE_INTEGER;
 StorageUtil.getNativeBalanceCacheForCaipAddress = (caipAddress) => {

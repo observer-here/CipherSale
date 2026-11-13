@@ -1,7 +1,5 @@
 "use client";
 
-// After the window: finalize reveals the totals with a KMS proof, then buyers claim or refund.
-// The owner can cancel while the sale is open and, after success, list the liquidity share on PancakeSwap.
 import { Contract } from "ethers";
 import { useState } from "react";
 import { cipherSaleAbi } from "@/abi/cipher-sale";
@@ -58,7 +56,6 @@ export function Actions({ sale, onDone }: { sale: SaleView; onDone: () => void }
     }
     const sdk = await openFhe(provider!);
     const { values: [raised, sold], proof } = await publicDecryptHandles(sdk, [await contract.raised(), await contract.tokensSold()]);
-    // deposit() is the only call that spends msg.value, and only when tokens were sold.
     const value = raised >= sale.softCap && sold > 0n ? fheFee("finalize") : 0n;
     await (await contract.finalize(raised, sold, proof, { value })).wait();
   });
