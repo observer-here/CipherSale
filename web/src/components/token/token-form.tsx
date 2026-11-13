@@ -7,7 +7,7 @@ import { tokenFactoryAbi } from "@/abi/token-factory";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { useWallet } from "@/hooks/wallet";
-import { ADDR } from "@/lib/chain";
+import { ADDR, requireChain } from "@/lib/chain";
 import { parseEth, short, txError } from "@/lib/format";
 
 function supplyText(value: string) {
@@ -37,6 +37,7 @@ export function TokenForm() {
     setToken("");
     try {
       if (!name.trim() || !symbol.trim() || parseEth(supply) <= 0n) return setNote("Enter a name, symbol, and supply");
+      await requireChain(provider);
       const signer = await provider.getSigner();
       const factory = new Contract(ADDR.tokenFactory, tokenFactoryAbi, signer);
       const tx = await factory.createToken(name.trim(), symbol.trim(), parseEth(supply));

@@ -12,7 +12,7 @@ import { Field } from "@/components/ui/field";
 import { Icon, Spotify, paths } from "@/components/ui/icon";
 import { clearSales } from "@/components/sale/use-sales";
 import { useWallet } from "@/hooks/wallet";
-import { ADDR, reader } from "@/lib/chain";
+import { ADDR, reader, requireChain } from "@/lib/chain";
 import { eth, parseEth, txError } from "@/lib/format";
 import { isLink, stringifyMeta, type SaleMeta } from "@/lib/meta";
 import { GATES } from "@/primus/gates";
@@ -241,6 +241,7 @@ export function SaleForm() {
     setNote("");
     setSale("");
     try {
+      await requireChain(provider);
       const signer = await provider.getSigner();
       const me = await signer.getAddress();
       const need = ok.opts.tokenPresale + ok.opts.tokenLiquidity;

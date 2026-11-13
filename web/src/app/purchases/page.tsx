@@ -17,7 +17,7 @@ export default function PurchasesPage() {
 
   useEffect(() => {
     if (!account || !sales.length) {
-      setMine([]);
+      setMine((rows) => rows.length ? [] : rows);
       return;
     }
     let stop = false;

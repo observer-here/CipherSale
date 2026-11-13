@@ -33,4 +33,5 @@ struct Attestation {
 
 interface IPrimusZKTLS {
     function verifyAttestation(Attestation calldata attestation) external view;
+    function encodeAttestation(Attestation calldata attestation) external pure returns (bytes32);
 }

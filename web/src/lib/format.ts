@@ -24,9 +24,11 @@ export function when(unix: number) {
   return new Date(unix * 1000).toLocaleString();
 }
 
+// Primus throws ZkAttestationError, which has a message but is not an Error.
 export function txError(err: unknown, fallback: string) {
-  if (typeof err === "object" && err && "shortMessage" in err && typeof err.shortMessage === "string" && err.shortMessage) {
-    return err.shortMessage;
-  }
-  return err instanceof Error ? err.message : fallback;
+  if (typeof err !== "object" || !err) return fallback;
+  const row = err as { shortMessage?: unknown; message?: unknown };
+  if (typeof row.shortMessage === "string" && row.shortMessage) return row.shortMessage;
+  if (typeof row.message === "string" && row.message) return row.message;
+  return fallback;
 }

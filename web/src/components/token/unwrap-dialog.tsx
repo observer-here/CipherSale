@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { cipherTokenAbi } from "@/abi/cipher-token";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/wallet";
-import { ADDR, reader } from "@/lib/chain";
+import { ADDR, reader, requireChain } from "@/lib/chain";
 import { eth, parseEth, short, txError } from "@/lib/format";
 import { publicDecryptHandles } from "@/primus/decrypt";
 import { fheFee } from "@/primus/fee";
@@ -62,10 +62,12 @@ export function UnwrapDialog({
   }
 
   async function run(work: () => Promise<void>, done: string) {
+    if (!provider) return;
     setBusy(true);
     setNote("");
     setBad(false);
     try {
+      await requireChain(provider);
       await work();
       setNote(done);
       onDone();
@@ -85,14 +87,15 @@ export function UnwrapDialog({
     if (wei <= 0n) return setNote("Enter an amount");
     await run(async () => {
       const signer = await provider.getSigner();
+      const me = await signer.getAddress();
       const ccht = new Contract(ADDR.ccht, cipherTokenAbi, signer);
       setNote("Burning cCHT");
-      const receipt = await (await ccht.unwrap(wei, account, { value: fheFee("unwrap") })).wait();
+      const receipt = await (await ccht.unwrap(wei, me, { value: fheFee("unwrap") })).wait();
       const event = receipt.logs
         .map((log: { topics: string[]; data: string }) => { try { return ccht.interface.parseLog(log); } catch { return null; } })
         .find((parsed: { name: string } | null) => parsed?.name === "UnwrapRequested");
       if (!event) throw new Error("Unwrap request not found");
-      localStorage.setItem(key(account), JSON.stringify([...saved(account), event.args.id]));
+      localStorage.setItem(key(me), JSON.stringify([...saved(me), event.args.id]));
       await finalize(event.args.id);
       setAmount("");
     }, "Unwrapped");

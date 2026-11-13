@@ -7,6 +7,7 @@ import { useState } from "react";
 import { cipherSaleAbi } from "@/abi/cipher-sale";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/wallet";
+import { requireChain } from "@/lib/chain";
 import { txError } from "@/lib/format";
 import { saleStatus } from "@/lib/read";
 import { publicDecryptHandles } from "@/primus/decrypt";
@@ -37,6 +38,7 @@ export function Actions({ sale, onDone }: { sale: SaleView; onDone: () => void }
     setBad(false);
     setNote(label);
     try {
+      await requireChain(provider);
       await work(new Contract(sale.address, cipherSaleAbi, await provider.getSigner()));
       setNote("Done");
       onDone();
@@ -51,11 +53,13 @@ export function Actions({ sale, onDone }: { sale: SaleView; onDone: () => void }
   const finalize = () => run("Revealing the totals", async (contract) => {
     if (sale.state === 1) {
       await (await contract.requestFinalize()).wait();
-      if (Number(await contract.state()) !== 2) return;
+      const state = Number(await contract.state());
+      if (state !== 2) throw new Error(state === 3 ? "Nobody bought, so the sale is refunding" : "Finalize is not ready");
     }
     const sdk = await openFhe(provider!);
     const { values: [raised, sold], proof } = await publicDecryptHandles(sdk, [await contract.raised(), await contract.tokensSold()]);
-    const value = raised >= sale.softCap ? fheFee("finalize") : 0n;
+    // deposit() is the only call that spends msg.value, and only when tokens were sold.
+    const value = raised >= sale.softCap && sold > 0n ? fheFee("finalize") : 0n;
     await (await contract.finalize(raised, sold, proof, { value })).wait();
   });
 
@@ -64,12 +68,15 @@ export function Actions({ sale, onDone }: { sale: SaleView; onDone: () => void }
   });
 
   const addLiquidity = () => run("Listing on PancakeSwap", async (contract) => {
-    let id = sale.listingId;
+    let id = await contract.listingId();
     if (BigInt(id) === 0n) {
       await (await contract.list({ value: fheFee("list") })).wait();
       id = await contract.listingId();
     }
-    const { proof } = await publicDecryptHandles(await openFhe(provider!), [id]);
+    const { values: [burned], proof } = await publicDecryptHandles(await openFhe(provider!), [id]);
+    const [raised, opts] = await Promise.all([contract.totalRaised(), contract.options()]);
+    const pay = BigInt(raised) * BigInt(opts.liquidityBps) / 10000n;
+    if (burned !== pay) throw new Error("The sale does not hold enough cCHT to list");
     await (await contract.addLiquidity(proof)).wait();
   });
 

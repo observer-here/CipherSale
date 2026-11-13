@@ -9,6 +9,7 @@ import type { SaleView } from "@/types/sale";
 const FRESH_MS = 20_000;
 
 type Snapshot = { sales: SaleView[]; at: number };
+const empty: SaleView[] = [];
 let cache: Snapshot | null = null;
 let inflight: Promise<Snapshot> | null = null;
 
@@ -35,7 +36,7 @@ export function useSales() {
     return () => { stop = true; };
   }, []);
 
-  const sales = snapshot?.sales ?? [];
+  const sales = snapshot?.sales ?? empty;
   const state = snapshot ? "ready" : failed ? "error" : "loading";
   return { sales, proofs: sales.reduce((sum, sale) => sum + sale.buyers, 0), state } as const;
 }

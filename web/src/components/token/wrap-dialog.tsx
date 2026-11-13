@@ -6,7 +6,7 @@ import { chtAbi } from "@/abi/cht";
 import { cipherTokenAbi } from "@/abi/cipher-token";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/wallet";
-import { ADDR } from "@/lib/chain";
+import { ADDR, requireChain } from "@/lib/chain";
 import { eth, parseEth, txError } from "@/lib/format";
 import { fheFee } from "@/primus/fee";
 function preview(value: string) {
@@ -30,6 +30,7 @@ export function WrapDialog({ balance, onDone }: { balance: bigint; onDone: () =>
     setNote("");
     setBad(false);
     try {
+      await requireChain(provider);
       const signer = await provider.getSigner();
       const me = await signer.getAddress();
       const cht = new Contract(ADDR.cht, chtAbi, signer);

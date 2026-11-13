@@ -22,6 +22,7 @@ contract CipherSale is CipherConfig, ICipherSale {
     uint64 public constant MAX_ATTESTATION_AGE = 1 days;
     uint256 public constant BPS = 10000;
     IPancakeRouter public constant ROUTER = IPancakeRouter(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
+    address private constant ATTESTOR = 0x5Ed3176045F68617B0958a61ac1868875C98C14d;
     uint8 public constant ACTIVE = 1;
     uint8 public constant FINALIZING = 2;
     uint8 public constant REFUNDING = 3;
@@ -232,10 +233,26 @@ contract CipherSale is CipherConfig, ICipherSale {
         require(block.timestamp >= issued && block.timestamp - issued <= MAX_ATTESTATION_AGE, "stale");
         bytes32 id = keccak256(abi.encode(attestation));
         require(!usedAttestation[id], "used");
-        primus.verifyAttestation(attestation);
+        _attestor(attestation);
         usedAttestation[id] = true;
         eligible[msg.sender] = true;
         buyers++;
         emit Eligible(msg.sender);
+    }
+
+    // The testnet verifier still lists the old attestor. The extension signs with ATTESTOR.
+    function _attestor(Attestation calldata attestation) internal view {
+        bytes memory signature = attestation.signatures[0];
+        require(attestation.signatures.length == 1 && signature.length == 65, "signature");
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+        assembly {
+            r := mload(add(signature, 0x20))
+            s := mload(add(signature, 0x40))
+            v := byte(0, mload(add(signature, 0x60)))
+        }
+        require(v == 27 || v == 28, "signature");
+        require(ecrecover(primus.encodeAttestation(attestation), v, r, s) == ATTESTOR, "signature");
     }
 }

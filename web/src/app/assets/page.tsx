@@ -8,7 +8,7 @@ import { WrapDialog } from "@/components/token/wrap-dialog";
 import { Button } from "@/components/ui/button";
 import { useBalances } from "@/hooks/balances";
 import { useWallet } from "@/hooks/wallet";
-import { ADDR } from "@/lib/chain";
+import { ADDR, requireChain } from "@/lib/chain";
 import { txError } from "@/lib/format";
 
 export default function AssetsPage() {
@@ -39,6 +39,7 @@ export default function AssetsPage() {
     if (!provider) return;
     setNote("");
     try {
+      await requireChain(provider);
       await (await new Contract(ADDR.cht, chtAbi, await provider.getSigner()).faucet()).wait();
       setNote("1,000 CHT claimed");
       await refresh();

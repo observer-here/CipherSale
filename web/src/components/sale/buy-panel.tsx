@@ -8,10 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Spotify } from "@/components/ui/icon";
 import { useWallet } from "@/hooks/wallet";
-import { reader } from "@/lib/chain";
+import { reader, requireChain } from "@/lib/chain";
 import { eth, parseEth, txError } from "@/lib/format";
 import { saleStatus } from "@/lib/read";
-import { prove, toSaleAttestation } from "@/primus/attestation";
+import { assertSaleProof, prove, toSaleAttestation } from "@/primus/attestation";
 import { encryptUint256 } from "@/primus/encrypt";
 import { fheFee } from "@/primus/fee";
 import { openFhe } from "@/primus/sdk";
@@ -53,7 +53,7 @@ export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void 
   }, [account, sale.address]);
 
   async function buy() {
-    if (!provider || !account) return setNote("Connect a wallet");
+    if (!provider) return setNote("Connect a wallet");
     let value: bigint;
     try {
       value = parseEth(amount);
@@ -65,12 +65,15 @@ export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void 
     setBad(false);
     setNote("");
     try {
+      await requireChain(provider);
       const signer = await provider.getSigner();
+      const me = await signer.getAddress();
       const saleRead = new Contract(sale.address, cipherSaleAbi, reader);
       let proof: unknown[] = NO_PROOF;
-      if (!(await saleRead.eligible(account))) {
+      if (!(await saleRead.eligible(me))) {
         setStep(1);
-        const att = toSaleAttestation(await prove(account));
+        const att = toSaleAttestation(await prove(me));
+        assertSaleProof(await saleRead.conditionHash(), att);
         proof = [
           att.recipient,
           [att.request.url, att.request.header, att.request.method, att.request.body],
@@ -85,14 +88,14 @@ export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void 
         setProved(true);
       }
       const payment = new Contract(await saleRead.payment(), cipherTokenAbi, signer);
-      if (!(await payment.operators(account, sale.address))) {
+      if (!(await payment.operators(me, sale.address))) {
         setStep(2);
         await (await payment.setOperator(sale.address, true)).wait();
         setAllowed(true);
       }
       setStep(3);
       const sdk = await openFhe(provider);
-      const hidden = await encryptUint256(sdk, sale.address, account, value);
+      const hidden = await encryptUint256(sdk, sale.address, me, value);
       const saleContract = new Contract(sale.address, cipherSaleAbi, signer);
       await (await saleContract.buy(proof, [hidden.handle, hidden.data], { value: fheFee("buy") })).wait();
       setStep(4);
