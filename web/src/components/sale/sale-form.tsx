@@ -10,7 +10,6 @@ import { tokenFactoryAbi } from "@/abi/token-factory";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Icon, Spotify, paths } from "@/components/ui/icon";
-import { toast } from "@/components/ui/toast";
 import { clearSales } from "@/components/sale/use-sales";
 import { useWallet } from "@/hooks/wallet";
 import { ADDR, reader } from "@/lib/chain";
@@ -45,7 +44,11 @@ function pretty(value: bigint) {
 }
 
 function when(unix: number) {
-  return new Date(unix * 1000).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  const date = new Date(unix * 1000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const hour = date.getHours();
+  return `${months[date.getMonth()]} ${date.getDate()}, ${hour % 12 || 12}:${pad(date.getMinutes())} ${hour >= 12 ? "PM" : "AM"}`;
 }
 
 function ahead(unix: number) {
@@ -53,7 +56,10 @@ function ahead(unix: number) {
   if (left <= 0) return "Window open";
   const days = Math.floor(left / 86400);
   const hours = Math.floor((left % 86400) / 3600);
-  return days ? `Starts in ${days}d ${hours}h` : `Starts in ${hours || 1}h`;
+  const minutes = Math.floor((left % 3600) / 60);
+  if (days) return `Starts in ${days}d ${hours}h`;
+  if (hours) return `Starts in ${hours}h ${minutes}m`;
+  return `Starts in ${minutes || 1}m`;
 }
 
 function Mark({ d }: { d: string }) {
@@ -215,7 +221,8 @@ export function SaleForm() {
       for (let i = step; i < next; i++) {
         const issue = stepIssue(i);
         if (!issue) continue;
-        toast(issue);
+        setBad(true);
+        setNote(issue);
         return;
       }
     }
@@ -227,7 +234,7 @@ export function SaleForm() {
   async function submit() {
     if (step !== 3) return;
     if (!provider) { setBad(true); return setNote("Connect a wallet"); }
-    if (!isAddress(token.trim())) return toast("Enter the project token address");
+    if (!isAddress(token.trim())) { setBad(true); return setNote("Enter the project token address"); }
     if (problem || !ok) { setBad(true); return setNote(problem || "Check the sale terms"); }
     setBusy(true);
     setBad(false);
@@ -277,7 +284,7 @@ export function SaleForm() {
     [paths.coin, "Price", `${pretty(ok.opts.presaleRate)} ${symbol} / cCHT`],
     [paths.coin, "Caps", `${pretty(ok.opts.softCap)} – ${pretty(ok.opts.hardCap)} cCHT`],
     [paths.wallet, "Contribution", `${pretty(ok.opts.minContribution)} – ${pretty(ok.opts.maxContribution)} cCHT`],
-    [paths.layers, "Liquidity", `${liquidity}% · ${pretty(ok.listingPay)} cCHT at hard cap`],
+    [paths.layers, "Liquidity", `${liquidity}% · ${pretty(ok.listingPay)} cCHT`],
     [paths.shield, "Verification", chosen.label],
     [paths.wallet, "Window", `${when(ok.opts.start)} – ${when(ok.opts.end)}`],
     [paths.wallet, "You deposit", `${pretty(need)} ${symbol}`],
@@ -296,9 +303,23 @@ export function SaleForm() {
     ["Buyer allocation", `${pretty(ok.opts.tokenPresale)} ${symbol}`],
     ["Listing allocation", `${pretty(ok.opts.tokenLiquidity)} ${symbol}`],
     ["You deposit", `${pretty(ok.opts.tokenPresale + ok.opts.tokenLiquidity)} ${symbol}`],
-    ["Start", new Date(ok.opts.start * 1000).toLocaleString()],
-    ["End", new Date(ok.opts.end * 1000).toLocaleString()],
+    ["Start", when(ok.opts.start)],
+    ["End", when(ok.opts.end)],
   ] : [];
+
+  const actions = (
+    <>
+      {note ? <p className={bad ? "note bad" : "note"}>{note}</p> : null}
+      <div className="wizard-nav">
+        {step > 0 ? <button className="btn btn-ghost" type="button" onClick={() => go(step - 1)}>Back</button> : null}
+        {sale ? <Link className="btn" href={`/sale/${sale}`}>Open sale</Link> : step < 3 ? (
+          <button className="btn" type="button" onClick={() => go(step + 1)}>{NEXT[step]}</button>
+        ) : (
+          <Button disabled={busy || !!problem} type="submit">{busy ? "Creating" : "Create Sale"}</Button>
+        )}
+      </div>
+    </>
+  );
 
   return (
     <form className="wizard" onSubmit={(event) => { event.preventDefault(); submit(); }}>
@@ -350,7 +371,10 @@ export function SaleForm() {
               <Field label="End" type="datetime-local" value={end} onChange={setEnd} />
             </div>
           </div>
-          <Preview rows={preview} warn={warn} />
+          <div className="side-col">
+            <Preview rows={preview} warn={warn} />
+            {actions}
+          </div>
         </div>
       ) : null}
 
@@ -377,7 +401,10 @@ export function SaleForm() {
               <Field label="Liquidity percent (50–100)" value={liquidity} onChange={setLiquidity} />
             </div>
           </div>
-          <Preview rows={preview} warn={warn} />
+          <div className="side-col">
+            <Preview rows={preview} warn={warn} />
+            {actions}
+          </div>
         </div>
       ) : null}
 
@@ -397,7 +424,10 @@ export function SaleForm() {
               <span>{chosen.label}</span>
             </div>
           </div>
-          <Preview rows={preview} warn={warn} />
+          <div className="side-col">
+            <Preview rows={preview} warn={warn} />
+            {actions}
+          </div>
         </div>
       ) : null}
 
@@ -417,31 +447,24 @@ export function SaleForm() {
               ))}
             </dl>
           </div>
-          <div className="buyer">
-            <h2 className="side-title">Buyer view</h2>
-            <p className="hint">The card on Explore Sales.</p>
-            <BuyerCard
-              name={meta?.name || "Your project"}
-              symbol={meta?.symbol || "—"}
-              about={about.description.trim()}
-              price={pretty(ok.opts.presaleRate)}
-              allocation={pretty(ok.opts.tokenPresale)}
-              liquidity={liquidity}
-              start={ok.opts.start}
-            />
+          <div className="side-col">
+            <div className="buyer">
+              <h2 className="side-title">Buyer view</h2>
+              <p className="hint">The card on Explore Sales.</p>
+              <BuyerCard
+                name={meta?.name || "Your project"}
+                symbol={meta?.symbol || "—"}
+                about={about.description.trim()}
+                price={pretty(ok.opts.presaleRate)}
+                allocation={pretty(ok.opts.tokenPresale)}
+                liquidity={liquidity}
+                start={ok.opts.start}
+              />
+            </div>
+            {actions}
           </div>
         </div>
       ) : null}
-
-      {note ? <p className={bad ? "note bad" : "note"}>{note}</p> : null}
-      <div className="wizard-nav">
-        {step > 0 ? <button className="btn btn-ghost" type="button" onClick={() => go(step - 1)}>Back</button> : null}
-        {sale ? <Link className="btn" href={`/sale/${sale}`}>Open sale</Link> : step < 3 ? (
-          <button className="btn" type="button" onClick={() => go(step + 1)}>{NEXT[step]}</button>
-        ) : (
-          <Button disabled={busy || !!problem} type="submit">{busy ? "Creating" : "Create Sale"}</Button>
-        )}
-      </div>
     </form>
   );
 }
