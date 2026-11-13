@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { WalletMenu } from "@/components/layout/wallet-menu";
 import { Icon, paths } from "@/components/ui/icon";
+import { Toaster } from "@/components/ui/toast";
 
 const platform = [
   ["/", "Home", "M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"],
@@ -116,6 +117,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
         <div className="content">{children}</div>
       </div>
+      <Toaster />
     </div>
   );
 }

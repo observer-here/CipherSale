@@ -9,7 +9,6 @@ import { eth } from "@/lib/format";
 import { saleStatus } from "@/lib/read";
 
 const people = "M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M16.5 10a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z M3 19c.6-2.4 2.5-3.6 5-3.6s4.4 1.2 5 3.6 M14.5 15.6c1.5-.4 3 .2 4 1.6";
-const coin = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M14.6 9.6c-.4-.8-1.4-1.3-2.6-1.3-1.4 0-2.5.8-2.5 1.9s1 1.7 2.5 1.9 2.5.8 2.5 1.9-1.1 1.9-2.5 1.9c-1.2 0-2.2-.5-2.6-1.4 M12 6.5v1.8 M12 15.7v1.8";
 const bolt = "M13 3 6 14h5l-1 7 8-11h-5z";
 
 export function Dashboard() {
@@ -21,7 +20,7 @@ export function Dashboard() {
   const stats = [
     [paths.layers, ready ? String(live) : "—", "Active Sales"],
     [people, ready ? String(proofs) : "—", "Verified Participants"],
-    [coin, revealed > 0n ? `${eth(revealed)} cCHT` : "Private", "Total Raised"],
+    [paths.coin, revealed > 0n ? `${eth(revealed)} cCHT` : "Private", "Total Raised"],
     [paths.shield, ready ? String(sales.length) : "—", "Total Sales"],
   ];
 
