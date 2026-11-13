@@ -5,7 +5,10 @@ const ethersV5 = path.join(process.cwd(), "src/primus/ethers-v5.ts");
 
 const nextConfig: NextConfig = {
   devIndicators: false,
-  // FHE WASM uses SharedArrayBuffer. The browser only exposes it on an isolated page.
+  // /jazz proxies the test gateway. WASM needs an isolated page for SharedArrayBuffer.
+  async rewrites() {
+    return [{ source: "/jazz/:path*", destination: "https://jazz-test.primuslabs.xyz/:path*" }];
+  },
   async headers() {
     return [{
       source: "/:path*",
