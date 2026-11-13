@@ -33,6 +33,10 @@ const nextConfig: NextConfig = {
       "@coinbase/cdp-sdk": false,
     };
     config.plugins.push(
+      new webpack.NormalModuleReplacementPlugin(
+        /[\\/]fhetransform-sdk[\\/]dist[\\/]wasm[\\/]worker-client\.browser\.js$/,
+        path.join(process.cwd(), "src/primus/fhe-direct.js"),
+      ),
       new webpack.NormalModuleReplacementPlugin(/^ethers$/, (resource: { context?: string; request: string }) => {
         const from = (resource.context ?? "").replaceAll("\\", "/");
         if (from.includes("@primuslabs/zktls-js-sdk")) resource.request = ethersV5;
