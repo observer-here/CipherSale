@@ -103,9 +103,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const [bell, setBell] = useState(false);
   const [drawer, setDrawer] = useState(false);
+  const [away, setAway] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setDrawer(false), [path]);
+  useEffect(() => {
+    const narrow = window.matchMedia("(max-width: 768px)");
+    let last = window.scrollY;
+    function onScroll() {
+      const y = window.scrollY;
+      if (!narrow.matches || y < 8) setAway(false);
+      else if (y > last + 6) setAway(true);
+      else if (y < last - 6) setAway(false);
+      last = y;
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   useEffect(() => setBell(false), [path]);
   useEffect(() => {
     if (!bell) return;
@@ -138,26 +152,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Icon d={paths.chevron} size={14} />
           </div>
         </div>
+        <a className="credit" href="https://x.com/0bserver_here" target="_blank" rel="noreferrer">
+          <span>built by <strong>observer</strong></span>
+          <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.727-8.835L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+        </a>
       </aside>
       <div className="workspace">
         <header className="top">
-          <button className="icon-btn menu-btn" aria-label="Open menu" onClick={() => setDrawer(true)}>
-            <Icon d="M4 7h16 M4 12h16 M4 17h16" size={22} />
-          </button>
-          <Brand className="top-brand" />
-          <SearchBox />
-          <div className="pop" ref={bellRef}>
-            <button className="icon-btn" aria-label="Notices" onClick={() => setBell((open) => !open)}>
-              <Icon d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6z M10 19a2 2 0 0 0 4 0" size={20} />
+          <div className={away ? "topbar away" : "topbar"}>
+            <button className="icon-btn menu-btn" aria-label="Open menu" onClick={() => setDrawer(true)}>
+              <Icon d="M4 7h16 M4 12h16 M4 17h16" size={22} />
             </button>
-            {bell ? (
-              <div className="menu">
-                <p className="hint">Notices stay on chain. Open a sale to see who was marked eligible. Raised amounts stay hidden until a sale is canceled or its window closes.</p>
-                <Link href="/sales" onClick={() => setBell(false)}>Explore sales</Link>
-              </div>
-            ) : null}
+            <Brand className="top-brand" />
+            <div className="pop" ref={bellRef}>
+              <button className="icon-btn" aria-label="Notices" onClick={() => setBell((open) => !open)}>
+                <Icon d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6z M10 19a2 2 0 0 0 4 0" size={20} />
+              </button>
+              {bell ? (
+                <div className="menu">
+                  <p className="hint">Notices stay on chain. Open a sale to see who was marked eligible. Raised amounts stay hidden until a sale is canceled or its window closes.</p>
+                  <Link href="/sales" onClick={() => setBell(false)}>Explore sales</Link>
+                </div>
+              ) : null}
+            </div>
+            <WalletMenu />
           </div>
-          <WalletMenu />
+          <SearchBox />
         </header>
         <div className="content">{children}</div>
       </div>
