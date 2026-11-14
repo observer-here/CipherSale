@@ -110,6 +110,11 @@ export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void 
     }
   }
 
+  let receive = "0";
+  try {
+    const value = parseEth(amount);
+    if (value > 0n && sale.presaleRate > 0n) receive = eth((value * sale.presaleRate) / 10n ** 18n, sale.decimals);
+  } catch { /* amount still being typed */ }
   const status = saleStatus(sale);
   const label = busy ? "Working" : status === "upcoming" ? "Not open yet" : status !== "live" ? "Sale closed" : "Contribute";
   const mark = (n: number) => {
@@ -138,6 +143,7 @@ export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void 
         })}
       </ol>
       <Field label={`cUSDT amount, ${eth(sale.minContribution)} to ${eth(sale.maxContribution)}`} value={amount} onChange={setAmount} />
+      <p className="hint">You receive <b className="mono">{receive} {sale.symbol}</b></p>
       <Button disabled={busy || status !== "live"} onClick={buy}>{label}</Button>
       {note ? <p className="note">{note}</p> : null}
     </div>

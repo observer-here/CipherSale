@@ -1,12 +1,12 @@
 "use client";
 
 import { Contract, id } from "ethers";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cipherSaleAbi } from "@/abi/cipher-sale";
 import { cipherTokenAbi } from "@/abi/cipher-token";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/wallet";
-import { requireChain } from "@/lib/chain";
+import { reader, requireChain } from "@/lib/chain";
 import { txError } from "@/lib/format";
 import { saleStatus } from "@/lib/read";
 import { decryptHandle, publicDecryptHandles } from "@/primus/decrypt";
@@ -28,8 +28,18 @@ export function Actions({ sale, onDone }: { sale: SaleView; onDone: () => void }
   const [note, setNote] = useState("");
   const [bad, setBad] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [buyer, setBuyer] = useState(false);
   const status = saleStatus(sale);
   const owner = !!account && account.toLowerCase() === sale.owner.toLowerCase();
+
+  useEffect(() => {
+    if (!account) return setBuyer(false);
+    let stop = false;
+    new Contract(sale.address, cipherSaleAbi, reader).eligible(account).then((ok) => {
+      if (!stop) setBuyer(Boolean(ok));
+    }).catch(() => { if (!stop) setBuyer(false); });
+    return () => { stop = true; };
+  }, [account, sale.address]);
 
   async function run(label: string, work: (contract: Contract) => Promise<void>) {
     if (!provider) return setNote("Connect a wallet");
@@ -108,15 +118,21 @@ export function Actions({ sale, onDone }: { sale: SaleView; onDone: () => void }
     await (await contract.finalize(raised, sold, proof)).wait();
   });
 
+  const showCancel = owner && (status === "live" || status === "upcoming");
+  const showFinalize = owner && (status === "ended" || status === "finalizing");
+  const showClaim = buyer && status === "succeeded";
+  const showRefund = buyer && status === "refunding";
+  if (!showCancel && !showFinalize && !showClaim && !showRefund) return null;
+
   return (
     <div className="box">
       <h2>Actions</h2>
       <p className="hint">{HINT[status]}</p>
       <div className="row">
-        {status === "ended" || status === "finalizing" ? <Button disabled={busy || !account} onClick={finalize}>Finalize</Button> : null}
-        {status === "succeeded" ? <Button disabled={busy || !account} onClick={claim}>Claim tokens</Button> : null}
-        {status === "refunding" ? <Button disabled={busy || !account} onClick={settle}>Refund cUSDT</Button> : null}
-        {owner && (status === "live" || status === "upcoming") ? <Button variant="ghost" disabled={busy} onClick={cancel}>Cancel sale</Button> : null}
+        {showFinalize ? <Button disabled={busy} onClick={finalize}>Finalize</Button> : null}
+        {showClaim ? <Button disabled={busy} onClick={claim}>Claim tokens</Button> : null}
+        {showRefund ? <Button disabled={busy} onClick={settle}>Refund cUSDT</Button> : null}
+        {showCancel ? <Button variant="ghost" disabled={busy} onClick={cancel}>Cancel sale</Button> : null}
       </div>
       {note ? <p className={`note${bad ? " bad" : ""}`}>{note}</p> : null}
     </div>
