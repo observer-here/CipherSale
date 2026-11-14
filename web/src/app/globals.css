@@ -121,7 +121,7 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
 }
 .menu a { font-weight: 600; }
 .menu p { margin: 0 0 8px; }
-.content { padding: 30px 16px 48px 28px; }
+.content { padding: 15px 16px 48px 28px; }
 
 /* Hero */
 .hero { position: relative; min-height: 268px; }
@@ -265,7 +265,8 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
   .nav a { gap: 10px; padding: 0 10px; font-size: 13px; }
   .net { padding: 0 10px; }
   .top { padding: 14px 14px 0 3px; }
-  .content { padding: 24px 14px 40px 3px; }
+  .content { padding: 12px 14px 40px 3px; }
+  .hero-photo { top: 0; }
   .hero h1 { font-size: 34px; line-height: 43px; }
   .points { flex-wrap: wrap; gap: 10px 0; }
   .points li { padding: 0 18px; }
@@ -298,7 +299,7 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
   .search { order: 3; flex: 1 1 100%; width: 100%; margin: 0; }
   .search kbd { display: none; }
   .search input { padding-right: 12px; }
-  .content { padding: 12px 8px 28px; }
+  .content { padding: 6px 8px 28px; }
 
   .hero { display: flex; min-height: 0; flex-direction: column; }
   .hero-copy { order: 1; }
