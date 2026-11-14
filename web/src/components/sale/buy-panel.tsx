@@ -20,7 +20,7 @@ import type { SaleView } from "@/types/sale";
 const NO_PROOF = ["0x0000000000000000000000000000000000000000", ["", "", "", ""], [], "", "", 0, "", [], []];
 const STEPS = [
   ["Spotify", "Opens in the Primus extension"],
-  ["Approve", "Allow this sale to pull cCHT"],
+  ["Approve", "Allow this sale to pull cUSDT"],
   ["Pay", "The amount stays encrypted"],
 ] as const;
 
@@ -134,7 +134,7 @@ export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void 
           );
         })}
       </ol>
-      <Field label={`cCHT amount, ${eth(sale.minContribution)} to ${eth(sale.maxContribution)}`} value={amount} onChange={setAmount} />
+      <Field label={`cUSDT amount, ${eth(sale.minContribution)} to ${eth(sale.maxContribution)}`} value={amount} onChange={setAmount} />
       <Button disabled={busy || closed} onClick={buy}>{busy ? "Working" : closed ? "Sale closed" : "Contribute"}</Button>
       {note ? <p className={bad ? "note bad" : "note"}>{note}</p> : null}
     </div>

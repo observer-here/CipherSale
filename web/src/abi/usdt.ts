@@ -1,5 +1,5 @@
-// Copied from contract/artifacts/contracts/CHT.sol/CHT.json
-export const chtAbi = [
+// Copied from contract/artifacts/contracts/USDT.sol/USDT.json
+export const usdtAbi = [
   {
     "anonymous": false,
     "inputs": [

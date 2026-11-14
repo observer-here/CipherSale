@@ -9,7 +9,7 @@ import { Contribution } from "@/components/sale/contribution";
 import { Countdown } from "@/components/sale/countdown";
 import { Copy } from "@/components/ui/copy";
 import { reader } from "@/lib/chain";
-import { eth, short, when } from "@/lib/format";
+import { eth, short, units, usd, when } from "@/lib/format";
 import { isLink } from "@/lib/meta";
 import { loadSale, saleStatus } from "@/lib/read";
 import type { SaleView } from "@/types/sale";
@@ -48,20 +48,16 @@ export default function SalePage() {
     ["Decimals", String(sale.decimals)],
     ["Total supply", `${eth(sale.totalSupply, sale.decimals)} ${symbol}`],
   ];
-  const poolRows: [string, React.ReactNode][] = [
+  const saleRows: [string, React.ReactNode][] = [
     ["Sale address", <Address key="s" value={sale.address} />],
     ["cToken address", <Address key="c" value={sale.saleToken} />],
-    ["Tokens for presale", `${eth(sale.tokenPresale)} ${symbol}`],
-    ["Tokens for liquidity", `${eth(sale.tokenLiquidity)} ${symbol}`],
-    ["Presale rate", `${eth(sale.presaleRate)} ${symbol} per cCHT`],
-    ["Listing rate", `${eth(sale.listingRate)} ${symbol} per cCHT`],
-    ["Soft cap", `${eth(sale.softCap)} cCHT`],
-    ["Hard cap", `${eth(sale.hardCap)} cCHT`],
-    ["Contribution", `${eth(sale.minContribution)} to ${eth(sale.maxContribution)} cCHT`],
+    ["Tokens for sale", `${eth(sale.tokenPresale)} ${symbol}`],
+    ["Price", usd(sale.presaleRate)],
+    ["Soft cap", `${eth(sale.softCap)} cUSDT`],
+    ["Hard cap", `${eth(sale.hardCap)} cUSDT`],
+    ["Contribution", `${eth(sale.minContribution)} to ${eth(sale.maxContribution)} cUSDT`],
     ["Start time", when(sale.start)],
     ["End time", when(sale.end)],
-    ["Listing on", "PancakeSwap"],
-    ["Liquidity percent", `${Number(sale.liquidityBps) / 100}%`],
     ["Buyer gate", sale.meta.gate || "Spotify account ownership"],
     ["Verified buyers", String(sale.buyers)],
   ];
@@ -77,7 +73,7 @@ export default function SalePage() {
           <h1>{sale.name} <span>{symbol}</span></h1>
           <div className="tags">
             <span>zkTLS</span>
-            <span>cCHT</span>
+            <span>cUSDT</span>
             {links.map(([key, label]) => <a key={key} href={sale.meta[key]} target="_blank" rel="noreferrer noopener"><span>{label}</span></a>)}
           </div>
         </div>
@@ -91,15 +87,15 @@ export default function SalePage() {
             <dl className="sheet">{tokenRows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
           </div>
           <div className="box">
-            <h2>Pool info</h2>
-            <dl className="sheet">{poolRows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+            <h2>Sale terms</h2>
+            <dl className="sheet">{saleRows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
           </div>
         </div>
         <div className="stack">
           <div className="box">
             {clock ? <><p className="hint">{clock[0]}</p><Countdown left={Number(clock[1]) - now} /></> : null}
             <dl className="sheet">
-              <div><dt>Raised</dt><dd className="mono">{sale.totalRaised > 0n ? `${eth(sale.totalRaised)} cCHT (${raisedPct}%)` : "Hidden until finalize"}</dd></div>
+              <div><dt>Raised</dt><dd className="mono">{sale.state === 3 || sale.state === 4 ? `${units(sale.totalRaised)} cUSDT (${raisedPct}%)` : "Hidden until finalize"}</dd></div>
             </dl>
             <BuyPanel sale={sale} onDone={reload} />
           </div>

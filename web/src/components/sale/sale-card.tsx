@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
-import { eth } from "@/lib/format";
+import { eth, fdv, units } from "@/lib/format";
 import { saleStatus } from "@/lib/read";
 import type { SaleView } from "@/types/sale";
 
@@ -28,7 +28,6 @@ export function SaleCard({ sale }: { sale: SaleView }) {
   const pct = windowPct(sale, now);
   const art = (parseInt(sale.address.slice(2, 4), 16) % 3) + 1;
   const label = status === "ended" ? "Closed" : status[0].toUpperCase() + status.slice(1);
-  const liquidity = Number(sale.liquidityBps) / 100;
   return (
     <Link href={`/sale/${sale.address}`} className={`card${status === "live" ? " live" : ""}`}>
       <div className={`card-art art-${art}`}>
@@ -46,8 +45,7 @@ export function SaleCard({ sale }: { sale: SaleView }) {
         {sale.meta.description ? <p className="blurb">{sale.meta.description}</p> : null}
         <div className="tags">
           <span>zkTLS</span>
-          <span>cCHT</span>
-          {liquidity ? <span>{liquidity}% liquidity</span> : null}
+          <span>cUSDT</span>
         </div>
         {status === "upcoming" ? (
           <p className="starts">Starts in {startsIn(sale.start - now)}</p>
@@ -58,9 +56,9 @@ export function SaleCard({ sale }: { sale: SaleView }) {
           </div>
         )}
         <div className="metrics">
-          <div><b>{eth(sale.presaleRate)}</b><span>Per cCHT</span></div>
+          <div><b>{fdv(sale.totalSupply, sale.presaleRate)}</b><span>FDV</span></div>
           <div><b>{eth(sale.tokenPresale)}</b><span>Allocation</span></div>
-          <div><b>{sale.totalRaised > 0n ? eth(sale.totalRaised) : "Private"}</b><span>Raised</span></div>
+          <div><b>{sale.state === 3 || sale.state === 4 ? `${units(sale.totalRaised)} cUSDT` : "Private"}</b><span>Raised</span></div>
         </div>
       </div>
     </Link>

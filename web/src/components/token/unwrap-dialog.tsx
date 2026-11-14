@@ -55,7 +55,7 @@ export function UnwrapDialog({
     const sdk = await openFhe(provider);
     setNote("Decrypting the burned amount");
     const { values: [cleartext], proof } = await publicDecryptHandles(sdk, [id]);
-    setNote("Releasing CHT");
+    setNote("Releasing USDT");
     await (await new Contract(ADDR.ccht, cipherTokenAbi, signer).finalizeUnwrap(id, cleartext, proof)).wait();
   }
 
@@ -87,7 +87,7 @@ export function UnwrapDialog({
       const signer = await provider.getSigner();
       const me = await signer.getAddress();
       const ccht = new Contract(ADDR.ccht, cipherTokenAbi, signer);
-      setNote("Burning cCHT");
+      setNote("Burning cUSDT");
       const receipt = await (await ccht.unwrap(wei, me, { value: fheFee("unwrap") })).wait();
       const event = receipt.logs
         .map((log: { topics: string[]; data: string }) => { try { return ccht.interface.parseLog(log); } catch { return null; } })
@@ -107,11 +107,11 @@ export function UnwrapDialog({
       </div>
       <label className="amount">
         <input placeholder="0.0" value={amount} onChange={(event) => setAmount(event.target.value)} />
-        <b>cCHT</b>
+        <b>cUSDT</b>
       </label>
-      <p className="hint">You receive <b className="mono">{value} CHT</b>. 1 cCHT = 1 CHT.</p>
-      <p className="hint">Unwrap burns cCHT, then releases CHT after the decryption proof. Keep a little tBNB for the fee.</p>
-      <Button disabled={busy || value === "0"} onClick={unwrap}>{busy ? "Unwrapping" : "Unwrap cCHT to CHT"}</Button>
+      <p className="hint">You receive <b className="mono">{value} USDT</b>. 1 cUSDT = 1 USDT.</p>
+      <p className="hint">Unwrap burns cUSDT, then releases USDT after the decryption proof. Keep a little tBNB for the fee.</p>
+      <Button disabled={busy || value === "0"} onClick={unwrap}>{busy ? "Unwrapping" : "Unwrap cUSDT to USDT"}</Button>
       {pending.map((id) => (
         <Button key={id} variant="ghost" disabled={busy} onClick={() => run(() => finalize(id), "Unwrapped")}>
           Finish {short(id)}

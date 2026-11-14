@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-// One call deploys the confidential project token and the sale, then moves the presale and listing tokens in.
-// Payment is cCHT. Sold tokens are wrapped only at finalize, like PrivacyPad.
+// One call deploys the confidential project token and the sale, then pulls the presale tokens in.
+// Payment is cUSDT. Sold tokens are wrapped only at finalize, like PrivacyPad.
 import {CipherSale} from "./CipherSale.sol";
 import {CipherTokenFactory} from "./CipherTokenFactory.sol";
 import {IBEP20} from "./interfaces/IBEP20.sol";
@@ -34,7 +34,7 @@ contract CipherSaleFactory {
             string.concat("Confidential ", token.name()), string.concat("c", token.symbol()), projectToken
         );
         sale = address(new CipherSale(primus, payment, ctoken, projectToken, msg.sender, attConditions, metadata, opts));
-        require(token.transferFrom(msg.sender, sale, opts.tokenPresale + opts.tokenLiquidity), "token");
+        require(token.transferFrom(msg.sender, sale, opts.tokenPresale), "token");
         allSales.push(sale);
         salesByCreator[msg.sender].push(sale);
         emit SaleCreated(msg.sender, sale, projectToken, ctoken);

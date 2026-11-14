@@ -11,7 +11,7 @@ const files = {
   "sale-factory.ts": [["saleFactoryAbi", "CipherSaleFactory.sol/CipherSaleFactory"]],
   "cipher-token.ts": [["cipherTokenAbi", "CipherToken.sol/CipherToken"]],
   "token-factory.ts": [["tokenFactoryAbi", "TokenFactory.sol/TokenFactory"]],
-  "cht.ts": [["chtAbi", "CHT.sol/CHT"]],
+  "usdt.ts": [["usdtAbi", "USDT.sol/USDT"]],
 };
 
 for (const [file, entries] of Object.entries(files)) {

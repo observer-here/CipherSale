@@ -109,7 +109,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <WalletMenu />
           {bell ? (
             <div className="menu">
-              <p className="hint">Notices stay on chain. Open a sale to see who was marked eligible. Raised amounts are not published.</p>
+              <p className="hint">Notices stay on chain. Open a sale to see who was marked eligible. Raised amounts stay hidden until a sale is canceled or its window closes.</p>
               <Link href="/sales" onClick={() => setBell(false)}>Explore sales</Link>
             </div>
           ) : null}

@@ -97,16 +97,6 @@ export const saleFactoryAbi = [
           },
           {
             "internalType": "uint256",
-            "name": "tokenLiquidity",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "liquidityBps",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
             "name": "softCap",
             "type": "uint256"
           },
@@ -128,11 +118,6 @@ export const saleFactoryAbi = [
           {
             "internalType": "uint256",
             "name": "presaleRate",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "listingRate",
             "type": "uint256"
           },
           {

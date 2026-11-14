@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-// CHT is a standard BEP-20 test token. Supply starts at 0.
+// USDT is a standard BEP-20 test token. Supply starts at 0.
 // faucet() mints FAUCET_AMOUNT to the caller, once per wallet, and emits Transfer from the zero address.
 // Every balance change emits Transfer and every approval emits Approval, so BscScan can index holders.
-// A user wraps CHT into cCHT before joining a sale.
-contract CHT {
-    string public constant name = "Cipher";
-    string public constant symbol = "CHT";
+// A user wraps USDT into cUSDT before joining a sale.
+contract USDT {
+    string public constant name = "USDT";
+    string public constant symbol = "USDT";
     uint8 public constant decimals = 18;
     uint256 public constant FAUCET_AMOUNT = 1000 ether;
 

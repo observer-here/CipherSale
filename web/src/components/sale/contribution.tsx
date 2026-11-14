@@ -43,7 +43,7 @@ export function Contribution({ sale }: { sale: SaleView }) {
       </div>
       {data ? (
         <dl className="sheet">
-          <div><dt>Contributed</dt><dd className="mono">{eth(data.paid)} cCHT</dd></div>
+          <div><dt>Contributed</dt><dd className="mono">{eth(data.paid)} cUSDT</dd></div>
           <div><dt>Claimable</dt><dd className="mono">{eth(data.tokens)} {sale.symbol}</dd></div>
           <div><dt>Share of hard cap</dt><dd className="mono">{share}%</dd></div>
         </dl>

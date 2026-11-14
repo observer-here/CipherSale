@@ -13,15 +13,15 @@ async function main() {
   console.log(`network ${network.name} chain ${chainId}`);
   console.log(`deployer ${deployer.address}`);
 
-  const cht = await ethers.deployContract("CHT");
-  await cht.waitForDeployment();
+  const usdt = await ethers.deployContract("USDT");
+  await usdt.waitForDeployment();
 
-  const ccht = await ethers.deployContract("CipherToken", [
-    "Confidential Cipher",
-    "cCHT",
-    await cht.getAddress(),
+  const cusdt = await ethers.deployContract("CipherToken", [
+    "Confidential USDT",
+    "cUSDT",
+    await usdt.getAddress(),
   ]);
-  await ccht.waitForDeployment();
+  await cusdt.waitForDeployment();
 
   const tokens = await ethers.deployContract("TokenFactory");
   await tokens.waitForDeployment();
@@ -30,14 +30,14 @@ async function main() {
   await wrappers.waitForDeployment();
 
   const sales = await ethers.deployContract("CipherSaleFactory", [
-    await ccht.getAddress(),
+    await cusdt.getAddress(),
     PRIMUS_VERIFIER,
     await wrappers.getAddress(),
   ]);
   await sales.waitForDeployment();
 
-  console.log(`CHT ${await cht.getAddress()}`);
-  console.log(`cCHT ${await ccht.getAddress()}`);
+  console.log(`USDT ${await usdt.getAddress()}`);
+  console.log(`cUSDT ${await cusdt.getAddress()}`);
   console.log(`TokenFactory ${await tokens.getAddress()}`);
   console.log(`CipherTokenFactory ${await wrappers.getAddress()}`);
   console.log(`CipherSaleFactory ${await sales.getAddress()}`);

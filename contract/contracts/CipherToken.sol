@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-// cCHT: confidential wrapper around a BEP-20. deposit() locks the BEP-20 and mints an encrypted balance.
+// cUSDT: confidential wrapper around a BEP-20. deposit() locks the BEP-20 and mints an encrypted balance.
 // Unwrap takes two steps. unwrap() burns the encrypted amount and marks the burned value as publicly
 // decryptable. Anyone can then call finalizeUnwrap() with the decrypted amount and the KMS proof, which the
 // Primus Decryption contract checks before the BEP-20 is released. The burned value, not the requested

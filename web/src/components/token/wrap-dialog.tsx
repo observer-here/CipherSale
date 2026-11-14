@@ -2,7 +2,7 @@
 
 import { Contract } from "ethers";
 import { useState } from "react";
-import { chtAbi } from "@/abi/cht";
+import { usdtAbi } from "@/abi/usdt";
 import { cipherTokenAbi } from "@/abi/cipher-token";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/wallet";
@@ -33,13 +33,13 @@ export function WrapDialog({ balance, onDone }: { balance: bigint; onDone: () =>
       await requireChain(provider);
       const signer = await provider.getSigner();
       const me = await signer.getAddress();
-      const cht = new Contract(ADDR.cht, chtAbi, signer);
-      const ccht = new Contract(ADDR.ccht, cipherTokenAbi, signer);
-      if (await cht.allowance(me, ADDR.ccht) < wei) {
-        setNote("Approving CHT");
-        await (await cht.approve(ADDR.ccht, wei)).wait();
+      const usdt = new Contract(ADDR.cht, usdtAbi, signer);
+      const cusdt = new Contract(ADDR.ccht, cipherTokenAbi, signer);
+      if (await usdt.allowance(me, ADDR.ccht) < wei) {
+        setNote("Approving USDT");
+        await (await usdt.approve(ADDR.ccht, wei)).wait();
       }
-      await (await ccht.deposit(wei, { value: fheFee("deposit") })).wait();
+      await (await cusdt.deposit(wei, { value: fheFee("deposit") })).wait();
       setAmount("");
       setNote("Wrapped");
       onDone();
@@ -59,11 +59,11 @@ export function WrapDialog({ balance, onDone }: { balance: bigint; onDone: () =>
       </div>
       <label className="amount">
         <input placeholder="0.0" value={amount} onChange={(event) => setAmount(event.target.value)} />
-        <b>CHT</b>
+        <b>USDT</b>
       </label>
-      <p className="hint">You receive <b className="mono">{value} cCHT</b>. 1 CHT = 1 cCHT.</p>
-      <p className="hint">cCHT is the confidential wrapper. The balance decrypts only for this wallet.</p>
-      <Button disabled={busy || value === "0"} onClick={wrap}>{busy ? "Wrapping" : "Wrap CHT to cCHT"}</Button>
+      <p className="hint">You receive <b className="mono">{value} cUSDT</b>. 1 USDT = 1 cUSDT.</p>
+      <p className="hint">cUSDT is the confidential wrapper. The balance decrypts only for this wallet.</p>
+      <Button disabled={busy || value === "0"} onClick={wrap}>{busy ? "Wrapping" : "Wrap USDT to cUSDT"}</Button>
       {note ? <p className={bad ? "note bad" : "note"}>{note}</p> : null}
     </div>
   );

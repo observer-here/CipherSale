@@ -12,7 +12,7 @@ import { Icon, Spotify, paths } from "@/components/ui/icon";
 import { clearSales } from "@/components/sale/use-sales";
 import { useWallet } from "@/hooks/wallet";
 import { ADDR, reader, requireChain } from "@/lib/chain";
-import { eth, parseEth, txError } from "@/lib/format";
+import { compact, eth, parseEth, txError, usd } from "@/lib/format";
 import { isLink, stringifyMeta, type SaleMeta } from "@/lib/meta";
 import { GATES } from "@/primus/gates";
 import type { SaleTerms } from "@/types/sale";
@@ -80,56 +80,45 @@ function Rows({ items }: { items: [string, string, string][] }) {
 
 function buildOpts(input: {
   rate: string;
-  listing: string;
   soft: string;
   hard: string;
   min: string;
   max: string;
-  liquidity: string;
   start: string;
   end: string;
-}): { opts: SaleTerms; listingPay: bigint } | { error: string } {
+}): { opts: SaleTerms } | { error: string } {
   let hardCap: bigint;
   let softCap: bigint;
   let minContribution: bigint;
   let maxContribution: bigint;
-  let presaleRate: bigint;
-  let listingRate: bigint;
+  let price: bigint;
   try {
     hardCap = parseEth(input.hard);
     softCap = parseEth(input.soft);
     minContribution = parseEth(input.min);
     maxContribution = parseEth(input.max);
-    presaleRate = parseEth(input.rate);
-    listingRate = parseEth(input.listing);
+    price = parseEth(input.rate);
   } catch {
     return { error: "Rates and caps must be numbers" };
   }
-  const liquidityPct = Number(input.liquidity);
-  if (!Number.isFinite(liquidityPct) || liquidityPct < 50 || liquidityPct > 100) return { error: "Liquidity percent must be from 50 to 100" };
-  const liquidityBps = BigInt(Math.round(liquidityPct * 100));
   if (softCap <= 0n || softCap > hardCap) return { error: "Soft cap must be above 0 and at most the hard cap" };
   if (minContribution <= 0n || minContribution > maxContribution || maxContribution > hardCap) {
     return { error: "Min must be above 0, at most the max, and the max at most the hard cap" };
   }
-  if (presaleRate <= 0n) return { error: "Presale rate must be above 0" };
+  if (price <= 0n) return { error: "Price must be above 0" };
   const start = Math.floor(new Date(input.start).getTime() / 1000);
   const end = Math.floor(new Date(input.end).getTime() / 1000);
   if (!Number.isFinite(start) || !Number.isFinite(end) || start >= end) return { error: "Start must be before the end" };
-  const listingPay = (hardCap * liquidityBps) / 10000n;
-  if (listingPay > 0n && listingRate <= 0n) return { error: "Listing rate must be above 0 when liquidity is set" };
+  const rate = (ONE * ONE) / price;
+  if (rate <= 0n) return { error: "Price is too high" };
   return {
-    listingPay,
     opts: {
-      tokenPresale: (hardCap * presaleRate) / ONE,
-      tokenLiquidity: listingPay === 0n ? 0n : (listingPay * listingRate) / ONE,
-      liquidityBps,
+      tokenPresale: (hardCap * rate) / ONE,
       softCap,
       hardCap,
       minContribution,
       maxContribution,
-      presaleRate,
-      listingRate: listingPay === 0n ? 0n : listingRate,
+      presaleRate: rate,
       start,
       end,
     },
@@ -141,17 +130,15 @@ export function SaleForm() {
   const [step, setStep] = useState(0);
   const [token, setToken] = useState("");
   const [about, setAbout] = useState<SaleMeta>({ description: "", website: "", telegram: "", twitter: "", gate: "" });
-  const [rate, setRate] = useState("1000");
-  const [listing, setListing] = useState("800");
+  const [rate, setRate] = useState("0.2");
   const [soft, setSoft] = useState("10");
   const [hard, setHard] = useState("100");
   const [min, setMin] = useState("1");
   const [max, setMax] = useState("20");
-  const [liquidity, setLiquidity] = useState("50");
   const [start, setStart] = useState(() => localInput(new Date(Date.now() + 60_000)));
   const [end, setEnd] = useState(() => localInput(new Date(Date.now() + 7 * 86_400_000)));
   const [mine, setMine] = useState<{ address: string; symbol: string }[]>([]);
-  const [meta, setMeta] = useState<{ name: string; symbol: string; balance: bigint } | null>(null);
+  const [meta, setMeta] = useState<{ name: string; symbol: string; balance: bigint; supply: bigint } | null>(null);
   const [reading, setReading] = useState(false);
   const [missing, setMissing] = useState(false);
   const [sale, setSale] = useState("");
@@ -188,14 +175,15 @@ export function SaleForm() {
     Promise.all([
       erc20.name(),
       erc20.symbol(),
+      erc20.totalSupply(),
       account ? erc20.balanceOf(account) : Promise.resolve(0n),
-    ]).then(([name, symbol, balance]) => {
-      if (!stop) setMeta({ name: String(name), symbol: String(symbol), balance });
+    ]).then(([name, symbol, supply, balance]) => {
+      if (!stop) setMeta({ name: String(name), symbol: String(symbol), balance, supply });
     }).catch(() => { if (!stop) { setMeta(null); setMissing(true); } }).finally(() => { if (!stop) setReading(false); });
     return () => { stop = true; };
   }, [token, account]);
 
-  const built = buildOpts({ rate, listing, soft, hard, min, max, liquidity, start, end });
+  const built = buildOpts({ rate, soft, hard, min, max, start, end });
   const badLink = (["website", "telegram", "twitter"] as const).some((key) => about[key].trim() && !isLink(about[key].trim()));
   const problem = "error" in built ? built.error : badLink ? "Links must start with https://" : "";
   const chosen = GATES[0];
@@ -243,7 +231,7 @@ export function SaleForm() {
       await requireChain(provider);
       const signer = await provider.getSigner();
       const me = await signer.getAddress();
-      const need = ok.opts.tokenPresale + ok.opts.tokenLiquidity;
+      const need = ok.opts.tokenPresale;
       const erc20 = new Contract(token.trim(), bep20Abi, signer);
       const balance = await erc20.balanceOf(me);
       if (balance < need) {
@@ -275,16 +263,24 @@ export function SaleForm() {
     }
   }
 
-  const need = ok ? ok.opts.tokenPresale + ok.opts.tokenLiquidity : 0n;
+  const need = ok ? ok.opts.tokenPresale : 0n;
+  const priceText = ok ? usd(ok.opts.presaleRate) : "";
+  let fdv = "";
+  if (meta && meta.supply > 0n) {
+    try {
+      const price = parseEth(rate);
+      if (price > 0n) fdv = compact((meta.supply * price) / ONE);
+    } catch { fdv = ""; }
+  }
   const warn = ok && meta && account && meta.balance < need
     ? `This wallet holds ${pretty(meta.balance)} ${symbol}. The sale needs ${pretty(need)}.`
     : "";
   const preview: [string, string, string][] = ok ? [
     [paths.layers, "Token", meta ? `${meta.name} · ${symbol}` : "Not set"],
-    [paths.coin, "Price", `${pretty(ok.opts.presaleRate)} ${symbol} / cCHT`],
-    [paths.coin, "Caps", `${pretty(ok.opts.softCap)} – ${pretty(ok.opts.hardCap)} cCHT`],
-    [paths.wallet, "Contribution", `${pretty(ok.opts.minContribution)} – ${pretty(ok.opts.maxContribution)} cCHT`],
-    [paths.layers, "Liquidity", `${liquidity}% · ${pretty(ok.listingPay)} cCHT`],
+    [paths.coin, "Price", priceText || "—"],
+    ...(fdv ? [[paths.coin, "FDV", fdv] as [string, string, string]] : []),
+    [paths.coin, "Caps", `${pretty(ok.opts.softCap)} – ${pretty(ok.opts.hardCap)} cUSDT`],
+    [paths.wallet, "Contribution", `${pretty(ok.opts.minContribution)} – ${pretty(ok.opts.maxContribution)} cUSDT`],
     [paths.shield, "Verification", chosen.label],
     [paths.wallet, "Window", `${when(ok.opts.start)} – ${when(ok.opts.end)}`],
     [paths.wallet, "You deposit", `${pretty(need)} ${symbol}`],
@@ -293,16 +289,13 @@ export function SaleForm() {
   const summary: [string, string][] = ok ? [
     ["Token", symbol],
     ["Project", meta?.name || "—"],
-    ["Price", `${pretty(ok.opts.presaleRate)} ${symbol} per cCHT`],
-    ["Listing", `${pretty(ok.opts.listingRate)} ${symbol} per cCHT`],
-    ["Soft cap", `${pretty(ok.opts.softCap)} cCHT`],
-    ["Hard cap", `${pretty(ok.opts.hardCap)} cCHT`],
-    ["Contribution", `${pretty(ok.opts.minContribution)} – ${pretty(ok.opts.maxContribution)} cCHT`],
+    ["Price", priceText || "—"],
+    ...(fdv ? [["FDV", fdv] as [string, string]] : []),
+    ["Soft cap", `${pretty(ok.opts.softCap)} cUSDT`],
+    ["Hard cap", `${pretty(ok.opts.hardCap)} cUSDT`],
+    ["Contribution", `${pretty(ok.opts.minContribution)} – ${pretty(ok.opts.maxContribution)} cUSDT`],
     ["Buyer verification", chosen.label],
-    ["Liquidity at hard cap", `${pretty(ok.listingPay)} cCHT`],
-    ["Buyer allocation", `${pretty(ok.opts.tokenPresale)} ${symbol}`],
-    ["Listing allocation", `${pretty(ok.opts.tokenLiquidity)} ${symbol}`],
-    ["You deposit", `${pretty(ok.opts.tokenPresale + ok.opts.tokenLiquidity)} ${symbol}`],
+    ["You deposit", `${pretty(ok.opts.tokenPresale)} ${symbol}`],
     ["Start", when(ok.opts.start)],
     ["End", when(ok.opts.end)],
   ] : [];
@@ -385,20 +378,18 @@ export function SaleForm() {
               <Mark d={paths.coin} />
               <div>
                 <h2>Token & Pricing</h2>
-                <p>Set the token price, listing ratio, and sale configuration.</p>
+                <p>Set the token price and the sale limits.</p>
               </div>
             </div>
             <div className="form">
               <h2>Pricing</h2>
-              <Field label="Tokens per 1 cCHT" value={rate} onChange={setRate} />
-              <Field label="Listing tokens per 1 cCHT" value={listing} onChange={setListing} />
+              <Field label="Price per token" value={rate} onChange={setRate} />
+              {fdv ? <p className="hint">FDV {fdv}</p> : null}
               <h2>Sale limits</h2>
-              <Field label="Soft cap (cCHT)" value={soft} onChange={setSoft} />
-              <Field label="Hard cap (cCHT)" value={hard} onChange={setHard} />
-              <Field label="Min contribution (cCHT)" value={min} onChange={setMin} />
-              <Field label="Max contribution (cCHT)" value={max} onChange={setMax} />
-              <h2>Liquidity</h2>
-              <Field label="Liquidity percent (50–100)" value={liquidity} onChange={setLiquidity} />
+              <Field label="Soft cap (cUSDT)" value={soft} onChange={setSoft} />
+              <Field label="Hard cap (cUSDT)" value={hard} onChange={setHard} />
+              <Field label="Min contribution (cUSDT)" value={min} onChange={setMin} />
+              <Field label="Max contribution (cUSDT)" value={max} onChange={setMax} />
             </div>
           </div>
           <div className="side-col">
@@ -415,7 +406,7 @@ export function SaleForm() {
               <Mark d={paths.shield} />
               <div>
                 <h2>Access & Verification</h2>
-                <p>Buyers prove this once, then pay an encrypted cCHT amount.</p>
+                <p>Buyers prove this once, then pay an encrypted cUSDT amount.</p>
               </div>
             </div>
             <h3 className="block-title">Buyer verification</h3>
@@ -455,9 +446,8 @@ export function SaleForm() {
                 name={meta?.name || "Your project"}
                 symbol={meta?.symbol || "—"}
                 about={about.description.trim()}
-                price={pretty(ok.opts.presaleRate)}
+                price={priceText}
                 allocation={pretty(ok.opts.tokenPresale)}
-                liquidity={liquidity}
                 start={ok.opts.start}
               />
             </div>
@@ -481,18 +471,17 @@ function Preview({ rows, warn }: { rows: [string, string, string][]; warn: strin
       </div>
       {rows.length ? <Rows items={rows} /> : <p className="hint">Fix the numbers to see the terms.</p>}
       {warn ? <p className="note bad">{warn}</p> : null}
-      <p className="callout"><Icon d={info} size={15} />Unsold buyer tokens return at finalize. Listing tokens stay for PancakeSwap.</p>
+      <p className="callout"><Icon d={info} size={15} />The sale pulls this allocation. Unsold tokens return at finalize.</p>
     </div>
   );
 }
 
-function BuyerCard({ name, symbol, about, price, allocation, liquidity, start }: {
+function BuyerCard({ name, symbol, about, price, allocation, start }: {
   name: string;
   symbol: string;
   about: string;
   price: string;
   allocation: string;
-  liquidity: string;
   start: number;
 }) {
   return (
@@ -509,12 +498,11 @@ function BuyerCard({ name, symbol, about, price, allocation, liquidity, start }:
         {about ? <p className="blurb">{about}</p> : null}
         <div className="tags">
           <span>zkTLS</span>
-          <span>cCHT</span>
-          <span>{liquidity}% liquidity</span>
+          <span>cUSDT</span>
         </div>
         <p className="starts">{ahead(start)}</p>
         <div className="metrics">
-          <div><b>{price}</b><span>Per cCHT</span></div>
+          <div><b>{price}</b><span>Price</span></div>
           <div><b>{allocation}</b><span>Allocation</span></div>
           <div><b>Private</b><span>Raised</span></div>
         </div>

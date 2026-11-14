@@ -2,7 +2,7 @@
 
 import { Contract } from "ethers";
 import { useState } from "react";
-import { chtAbi } from "@/abi/cht";
+import { usdtAbi } from "@/abi/usdt";
 import { UnwrapDialog } from "@/components/token/unwrap-dialog";
 import { WrapDialog } from "@/components/token/wrap-dialog";
 import { Button } from "@/components/ui/button";
@@ -40,8 +40,8 @@ export default function AssetsPage() {
     setNote("");
     try {
       await requireChain(provider);
-      await (await new Contract(ADDR.cht, chtAbi, await provider.getSigner()).faucet()).wait();
-      setNote("1,000 CHT claimed");
+      await (await new Contract(ADDR.cht, usdtAbi, await provider.getSigner()).faucet()).wait();
+      setNote("1,000 USDT claimed");
       await refresh();
     } catch (err) {
       setNote(txError(err, "Faucet already used"));
@@ -53,7 +53,7 @@ export default function AssetsPage() {
       <div className="page-head">
         <div>
           <h1>Assets</h1>
-          <p className="lede">Wrap CHT into cCHT, or unwrap it back. 1 CHT = 1 cCHT.</p>
+          <p className="lede">Wrap USDT into cUSDT, or unwrap it back. 1 USDT = 1 cUSDT.</p>
         </div>
       </div>
       {!account ? (
@@ -65,19 +65,19 @@ export default function AssetsPage() {
         <div className="box swap">
           <div className="split">
             <div>
-              <span className="hint">CHT balance</span>
+              <span className="hint">USDT balance</span>
               <b className="balance mono">{cht}</b>
-              <button className="eye" type="button" onClick={claim}>Claim 1,000 CHT</button>
+              <button className="eye" type="button" onClick={claim}>Claim 1,000 USDT</button>
             </div>
             <div>
-              <span className="hint">cCHT balance</span>
+              <span className="hint">cUSDT balance</span>
               <b className="balance mono">{shown ? ccht : "••••••"}</b>
               <button className="eye" type="button" onClick={toggle}>{eye ? "Decrypting" : shown ? "Hide" : "Show"}</button>
             </div>
           </div>
           <div className="filters">
-            <button className={tab === "wrap" ? "on" : ""} type="button" onClick={() => setTab("wrap")}>Wrap CHT</button>
-            <button className={tab === "unwrap" ? "on" : ""} type="button" onClick={() => setTab("unwrap")}>Unwrap cCHT</button>
+            <button className={tab === "wrap" ? "on" : ""} type="button" onClick={() => setTab("wrap")}>Wrap USDT</button>
+            <button className={tab === "unwrap" ? "on" : ""} type="button" onClick={() => setTab("unwrap")}>Unwrap cUSDT</button>
           </div>
           {tab === "wrap" ? (
             <WrapDialog balance={chtRaw} onDone={() => done().catch(() => undefined)} />

@@ -2,7 +2,7 @@
 
 import { Contract } from "ethers";
 import { useCallback, useEffect, useState } from "react";
-import { chtAbi } from "@/abi/cht";
+import { usdtAbi } from "@/abi/usdt";
 import { useWallet } from "@/hooks/wallet";
 import { ADDR, reader } from "@/lib/chain";
 import { cipher, eth } from "@/lib/format";
@@ -34,7 +34,7 @@ export function useBalances(enabled = true, decrypt = true) {
 
   const refresh = useCallback(async () => {
     if (!account) return;
-    const raw = await new Contract(ADDR.cht, chtAbi, reader).balanceOf(account);
+    const raw = await new Contract(ADDR.cht, usdtAbi, reader).balanceOf(account);
     setChtRaw(raw);
     setCht(eth(raw));
     if (decrypt) await reveal();

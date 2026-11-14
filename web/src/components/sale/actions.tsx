@@ -15,10 +15,10 @@ import type { SaleView } from "@/types/sale";
 
 const HINT = {
   upcoming: "The sale has not opened yet.",
-  live: "Contributions are encrypted. Nobody sees the raised total until the window closes.",
+  live: "Contributions are encrypted. Canceling the sale, or closing the window, reveals the raised total.",
   ended: "The window closed. Finalize reveals the raised total and tokens sold with a KMS proof.",
   finalizing: "The totals are decryptable. Finalize submits them with the proof.",
-  refunding: "The soft cap was missed or the sale was canceled. Refund returns your cCHT.",
+  refunding: "The soft cap was missed or the sale was canceled. Refund returns your cUSDT.",
   succeeded: "The soft cap was met. Claim sends your confidential tokens.",
 };
 
@@ -56,7 +56,7 @@ export function Actions({ sale, onDone }: { sale: SaleView; onDone: () => void }
     }
     const sdk = await openFhe(provider!);
     const { values: [raised, sold], proof } = await publicDecryptHandles(sdk, [await contract.raised(), await contract.tokensSold()]);
-    const value = raised >= sale.softCap && sold > 0n ? fheFee("finalize") : 0n;
+    const value = !await contract.cancelled() && raised >= sale.softCap && sold > 0n ? fheFee("finalize") : 0n;
     await (await contract.finalize(raised, sold, proof, { value })).wait();
   });
 
@@ -64,21 +64,12 @@ export function Actions({ sale, onDone }: { sale: SaleView; onDone: () => void }
     await (await contract.settle({ value: fheFee("settle") })).wait();
   });
 
-  const addLiquidity = () => run("Listing on PancakeSwap", async (contract) => {
-    let id = await contract.listingId();
-    if (BigInt(id) === 0n) {
-      await (await contract.list({ value: fheFee("list") })).wait();
-      id = await contract.listingId();
-    }
-    const { values: [burned], proof } = await publicDecryptHandles(await openFhe(provider!), [id]);
-    const [raised, opts] = await Promise.all([contract.totalRaised(), contract.options()]);
-    const pay = BigInt(raised) * BigInt(opts.liquidityBps) / 10000n;
-    if (burned !== pay) throw new Error("The sale does not hold enough cCHT to list");
-    await (await contract.addLiquidity(proof)).wait();
-  });
-
   const cancel = () => run("Canceling", async (contract) => {
     await (await contract.cancel()).wait();
+    if (Number(await contract.state()) !== 2) return;
+    const sdk = await openFhe(provider!);
+    const { values: [raised, sold], proof } = await publicDecryptHandles(sdk, [await contract.raised(), await contract.tokensSold()]);
+    await (await contract.finalize(raised, sold, proof)).wait();
   });
 
   return (
@@ -88,10 +79,7 @@ export function Actions({ sale, onDone }: { sale: SaleView; onDone: () => void }
       <div className="row">
         {status === "ended" || status === "finalizing" ? <Button disabled={busy || !account} onClick={finalize}>Finalize</Button> : null}
         {status === "succeeded" || status === "refunding" ? (
-          <Button disabled={busy || !account} onClick={settle}>{status === "succeeded" ? "Claim tokens" : "Refund cCHT"}</Button>
-        ) : null}
-        {owner && status === "succeeded" && sale.liquidityBps > 0n && !sale.listed ? (
-          <Button variant="ghost" disabled={busy} onClick={addLiquidity}>Add liquidity</Button>
+          <Button disabled={busy || !account} onClick={settle}>{status === "succeeded" ? "Claim tokens" : "Refund cUSDT"}</Button>
         ) : null}
         {owner && (status === "live" || status === "upcoming") ? <Button variant="ghost" disabled={busy} onClick={cancel}>Cancel sale</Button> : null}
       </div>

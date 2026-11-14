@@ -28,15 +28,13 @@ export async function listSales(provider: Provider): Promise<SaleView[]> {
 
 export async function loadSale(provider: Provider, address: string): Promise<SaleView> {
   const sale = new Contract(address, cipherSaleAbi, provider);
-  const [owner, token, saleToken, state, totalRaised, totalSold, listingId, listed, buyers, raised, tokensSold, options, metadata] = await Promise.all([
+  const [owner, token, saleToken, state, totalRaised, totalSold, buyers, raised, tokensSold, options, metadata] = await Promise.all([
     sale.owner(),
     sale.token(),
     sale.saleToken(),
     sale.state(),
     sale.totalRaised(),
     sale.totalSold(),
-    sale.listingId(),
-    sale.listed(),
     sale.buyers(),
     sale.raised(),
     sale.tokensSold(),
@@ -58,8 +56,6 @@ export async function loadSale(provider: Provider, address: string): Promise<Sal
     state: Number(state),
     totalRaised,
     totalSold,
-    listingId,
-    listed,
     buyers: Number(buyers),
     raised,
     tokensSold,
@@ -69,16 +65,13 @@ export async function loadSale(provider: Provider, address: string): Promise<Sal
     totalSupply,
     meta: parseMeta(metadata),
     tokenPresale: options[0],
-    tokenLiquidity: options[1],
-    liquidityBps: options[2],
-    softCap: options[3],
-    hardCap: options[4],
-    minContribution: options[5],
-    maxContribution: options[6],
-    presaleRate: options[7],
-    listingRate: options[8],
-    start: Number(options[9]),
-    end: Number(options[10]),
+    softCap: options[1],
+    hardCap: options[2],
+    minContribution: options[3],
+    maxContribution: options[4],
+    presaleRate: options[5],
+    start: Number(options[6]),
+    end: Number(options[7]),
   };
 }
 
