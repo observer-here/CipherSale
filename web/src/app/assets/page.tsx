@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useBalances } from "@/hooks/balances";
 import { useWallet } from "@/hooks/wallet";
 import { ADDR, requireChain } from "@/lib/chain";
+import { toast } from "@/components/ui/toast";
 import { txError } from "@/lib/format";
 
 export default function AssetsPage() {
@@ -18,7 +19,6 @@ export default function AssetsPage() {
   const [shown, setShown] = useState(false);
   const [eye, setEye] = useState(false);
   const [note, setNote] = useState("");
-  const [bad, setBad] = useState(false);
 
   async function done() {
     await refresh();
@@ -39,15 +39,13 @@ export default function AssetsPage() {
   async function claim() {
     if (!provider) return;
     setNote("");
-    setBad(false);
     try {
       await requireChain(provider);
       await (await new Contract(ADDR.cht, usdtAbi, await provider.getSigner()).faucet()).wait();
       setNote("1,000 USDT claimed");
       await refresh();
     } catch (err) {
-      setBad(true);
-      setNote(txError(err, "Faucet already used"));
+      toast(txError(err, "Faucet already used"));
     }
   }
 
@@ -66,7 +64,7 @@ export default function AssetsPage() {
           <div className="split">
             <div>
               <span className="hint">USDT balance</span>
-              <b className="balance mono">{cht}</b>
+              <b className="balance mono">{cht === "—" ? <span className="bone" /> : cht}</b>
               <button className="eye" type="button" onClick={claim}>Claim 1,000 USDT</button>
             </div>
             <div>
@@ -84,7 +82,7 @@ export default function AssetsPage() {
           ) : (
             <UnwrapDialog balance={cchtRaw} onMax={async () => { const value = await reveal(); setShown(true); return value; }} onDone={() => done().catch(() => undefined)} />
           )}
-          {note ? <p className={bad ? "note bad" : "note"}>{note}</p> : null}
+          {note ? <p className="note">{note}</p> : null}
         </div>
       )}
     </section>

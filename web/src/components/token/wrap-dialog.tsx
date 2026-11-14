@@ -7,6 +7,7 @@ import { cipherTokenAbi } from "@/abi/cipher-token";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/wallet";
 import { ADDR, requireChain } from "@/lib/chain";
+import { toast } from "@/components/ui/toast";
 import { eth, parseEth, txError } from "@/lib/format";
 import { fheFee } from "@/primus/fee";
 
@@ -18,18 +19,16 @@ export function WrapDialog({ balance, onDone }: { balance: bigint; onDone: () =>
   const { provider } = useWallet();
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
-  const [bad, setBad] = useState(false);
   const [busy, setBusy] = useState(false);
   const value = preview(amount);
 
   async function wrap() {
     if (!provider) return;
     let wei: bigint;
-    try { wei = parseEth(amount); } catch { return setNote("Enter an amount"); }
-    if (wei <= 0n) return setNote("Enter an amount");
+    try { wei = parseEth(amount); } catch { return toast("Enter an amount"); }
+    if (wei <= 0n) return toast("Enter an amount");
     setBusy(true);
     setNote("");
-    setBad(false);
     try {
       await requireChain(provider);
       const signer = await provider.getSigner();
@@ -45,8 +44,8 @@ export function WrapDialog({ balance, onDone }: { balance: bigint; onDone: () =>
       setNote("Wrapped");
       onDone();
     } catch (err) {
-      setBad(true);
-      setNote(txError(err, "Wrap failed"));
+      setNote("");
+      toast(txError(err, "Wrap failed"));
     } finally {
       setBusy(false);
     }
@@ -65,7 +64,7 @@ export function WrapDialog({ balance, onDone }: { balance: bigint; onDone: () =>
       <p className="hint">You receive <b className="mono">{value} cUSDT</b>. 1 USDT = 1 cUSDT.</p>
       <p className="hint">cUSDT is the confidential wrapper. The balance decrypts only for this wallet.</p>
       <Button disabled={busy || value === "0"} onClick={wrap}>{busy ? "Wrapping" : "Wrap USDT to cUSDT"}</Button>
-      {note ? <p className={bad ? "note bad" : "note"}>{note}</p> : null}
+      {note ? <p className="note">{note}</p> : null}
     </div>
   );
 }

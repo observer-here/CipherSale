@@ -20,46 +20,87 @@ function startsIn(seconds: number) {
   return hours ? `${hours}h ${minutes}m` : `${minutes}m`;
 }
 
-export function SaleCard({ sale }: { sale: SaleView }) {
+export function CardBone() {
+  return (
+    <div className="card still" aria-hidden="true">
+      <div className="bone art" />
+      <div className="card-body">
+        <div className="who">
+          <span className="bone round" />
+          <div>
+            <span className="bone name" />
+            <span className="bone sub" />
+          </div>
+        </div>
+        <span className="bone line" />
+        <div className="tags"><span>zkTLS</span><span>cUSDT</span></div>
+        <div className="bar-row">
+          <div className="bar" />
+          <span className="bone" style={{ width: 28 }} />
+        </div>
+        <div className="metrics">
+          <div><b><span className="bone" /></b><span>FDV</span></div>
+          <div><b><span className="bone" /></b><span>Supply</span></div>
+          <div><b><span className="bone" /></b><span>Raised</span></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function CardBones({ count = 3 }: { count?: number }) {
+  return (
+    <div className="cards">
+      {Array.from({ length: count }, (_, n) => <CardBone key={n} />)}
+    </div>
+  );
+}
+
+export function SaleCard({ sale }: { sale: Partial<SaleView> & { address: string } }) {
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
   useEffect(() => {
     const tick = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
     return () => clearInterval(tick);
   }, []);
-  const status = saleStatus(sale, now);
-  const pct = windowPct(sale, now);
+  const has = (key: keyof SaleView) => sale[key] !== undefined;
+  const timed = has("state") && has("start") && has("end");
+  const status = timed ? saleStatus(sale as SaleView, now) : "";
+  const pct = timed ? windowPct(sale as SaleView, now) : 0;
   const art = (parseInt(sale.address.slice(2, 4), 16) % 3) + 1;
-  const label = status === "refunding" ? "Canceled" : status === "ended" ? "Closed" : status[0].toUpperCase() + status.slice(1);
+  const label = status === "refunding" ? "Canceled" : status === "ended" ? "Closed" : status ? status[0].toUpperCase() + status.slice(1) : "";
+  const fdvText = has("totalSupply") && has("presaleRate") ? fdv(sale.totalSupply!, sale.presaleRate!) : null;
+  const supplyText = has("tokenPresale") && has("totalSupply") ? supplyShare(sale.tokenPresale!, sale.totalSupply!) : null;
+  const raisedText = has("state") && has("totalRaised") ? (sale.state === 3 || sale.state === 4 ? `${units(sale.totalRaised!)} cUSDT` : "Private") : null;
   return (
     <Link href={`/sale/${sale.address}`} className={`card${status === "live" ? " live" : ""}`}>
       <div className={`card-art art-${art}`}>
-        <span className={`flag ${status}`}>{label}</span>
+        {status ? <span className={`flag ${status}`}>{label}</span> : <span className="bone" style={{ position: "absolute", top: 12, left: 12, width: 64, height: 18 }} />}
       </div>
       <div className="card-body">
         <div className="who">
-          <span className="avatar">{sale.symbol.slice(0, 1) || "S"}</span>
+          {has("symbol") ? <span className="avatar">{sale.symbol!.slice(0, 1) || "S"}</span> : <span className="bone round" />}
           <div>
-            <h3>{sale.name}{sale.state === 4 ? <i className="ok" title="Succeeded" /> : null}</h3>
-            <p>{sale.symbol}</p>
+            {has("name") ? <h3>{sale.name}{sale.state === 4 ? <i className="ok" title="Succeeded" /> : null}</h3> : <span className="bone name" />}
+            {has("symbol") ? <p>{sale.symbol}</p> : <span className="bone sub" />}
           </div>
         </div>
-        {sale.meta.description ? <p className="blurb">{sale.meta.description}</p> : null}
+        {has("meta") ? (sale.meta!.description ? <p className="blurb">{sale.meta!.description}</p> : null) : <span className="bone line" />}
         <div className="tags">
           <span>zkTLS</span>
           <span>cUSDT</span>
         </div>
         {status === "upcoming" ? (
-          <p className="starts">Starts in {startsIn(sale.start - now)}</p>
+          <p className="starts">Starts in {startsIn(sale.start! - now)}</p>
         ) : (
           <div className="bar-row" title="Time elapsed in the sale window">
-            <div className="bar"><i style={{ width: `${pct}%` }} /></div>
-            <span>{pct}%</span>
+            <div className="bar">{timed ? <i style={{ width: `${pct}%` }} /> : null}</div>
+            {timed ? <span>{pct}%</span> : <span className="bone" style={{ width: 28 }} />}
           </div>
         )}
         <div className="metrics">
-          <div><b>{fdv(sale.totalSupply, sale.presaleRate)}</b><span>FDV</span></div>
-          <div><b>{supplyShare(sale.tokenPresale, sale.totalSupply)}</b><span>Supply</span></div>
-          <div><b>{sale.state === 3 || sale.state === 4 ? `${units(sale.totalRaised)} cUSDT` : "Private"}</b><span>Raised</span></div>
+          <div><b>{fdvText ?? <span className="bone" />}</b><span>FDV</span></div>
+          <div><b>{supplyText ?? <span className="bone" />}</b><span>Supply</span></div>
+          <div><b>{raisedText ?? <span className="bone" />}</b><span>Raised</span></div>
         </div>
       </div>
     </Link>

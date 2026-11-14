@@ -12,6 +12,7 @@ import { Icon, Spotify, paths } from "@/components/ui/icon";
 import { clearSales } from "@/components/sale/use-sales";
 import { useWallet } from "@/hooks/wallet";
 import { ADDR, reader, requireChain } from "@/lib/chain";
+import { toast } from "@/components/ui/toast";
 import { compact, eth, parseEth, supplyShare, txError, usd } from "@/lib/format";
 import { isLink, stringifyMeta, type SaleMeta } from "@/lib/meta";
 import { GATES } from "@/primus/gates";
@@ -143,7 +144,6 @@ export function SaleForm() {
   const [missing, setMissing] = useState(false);
   const [sale, setSale] = useState("");
   const [note, setNote] = useState("");
-  const [bad, setBad] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -208,23 +208,20 @@ export function SaleForm() {
       for (let i = step; i < next; i++) {
         const issue = stepIssue(i);
         if (!issue) continue;
-        setBad(true);
-        setNote(issue);
+        if (issue !== "Reading the token") toast(issue);
         return;
       }
     }
     setNote("");
-    setBad(false);
     setStep(next);
   }
 
   async function submit() {
     if (step !== 3) return;
-    if (!provider) { setBad(true); return setNote("Connect a wallet"); }
-    if (!isAddress(token.trim())) { setBad(true); return setNote("Enter the project token address"); }
-    if (problem || !ok) { setBad(true); return setNote(problem || "Check the sale terms"); }
+    if (!provider) return toast("Connect a wallet");
+    if (!isAddress(token.trim())) return toast("Enter the project token address");
+    if (problem || !ok) return toast(problem || "Check the sale terms");
     setBusy(true);
-    setBad(false);
     setNote("");
     setSale("");
     try {
@@ -234,10 +231,7 @@ export function SaleForm() {
       const need = ok.opts.tokenPresale;
       const erc20 = new Contract(token.trim(), bep20Abi, signer);
       const balance = await erc20.balanceOf(me);
-      if (balance < need) {
-        setBad(true);
-        return setNote(`This sale needs ${eth(need)} tokens. This wallet holds ${eth(balance)}.`);
-      }
+      if (balance < need) return toast(`This sale needs ${eth(need)} tokens. This wallet holds ${eth(balance)}.`);
       const allowance = await erc20.allowance(me, ADDR.saleFactory);
       if (allowance < need) {
         setNote("Approving tokens");
@@ -254,10 +248,11 @@ export function SaleForm() {
       clearSales();
       const address = parsed ? String(parsed.args.sale) : "";
       setSale(address);
-      setNote(address ? "Sale created" : "Sale created, but the receipt had no sale address");
+      if (address) setNote("Sale created");
+      else toast("Sale created, but the receipt had no sale address");
     } catch (err) {
-      setBad(true);
-      setNote(txError(err, "Create failed"));
+      setNote("");
+      toast(txError(err, "Create failed"));
     } finally {
       setBusy(false);
     }
@@ -302,7 +297,7 @@ export function SaleForm() {
 
   const actions = (
     <>
-      {note ? <p className={bad ? "note bad" : "note"}>{note}</p> : null}
+      {note ? <p className="note">{note}</p> : null}
       <div className="wizard-nav">
         {step > 0 ? <button className="btn btn-ghost" type="button" onClick={() => go(step - 1)}>Back</button> : null}
         {sale ? <Link className="btn" href={`/sale/${sale}`}>Open sale</Link> : step < 3 ? (

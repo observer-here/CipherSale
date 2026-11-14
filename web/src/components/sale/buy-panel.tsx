@@ -9,6 +9,7 @@ import { Field } from "@/components/ui/field";
 import { Spotify } from "@/components/ui/icon";
 import { useWallet } from "@/hooks/wallet";
 import { reader, requireChain } from "@/lib/chain";
+import { toast } from "@/components/ui/toast";
 import { eth, parseEth, txError } from "@/lib/format";
 import { saleStatus } from "@/lib/read";
 import { assertSaleProof, prove, toSaleAttestation } from "@/primus/attestation";
@@ -52,21 +53,14 @@ export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void 
   }, [account, sale.address]);
 
   async function buy() {
-    if (!provider) {
-      setBad(true);
-      return setNote("Connect a wallet");
-    }
+    if (!provider) return toast("Connect a wallet");
     let value: bigint;
     try {
       value = parseEth(amount);
     } catch {
-      setBad(true);
-      return setNote("Enter an amount");
+      return toast("Enter an amount");
     }
-    if (value <= 0n) {
-      setBad(true);
-      return setNote("Enter an amount");
-    }
+    if (value <= 0n) return toast("Enter an amount");
     setBusy(true);
     setBad(false);
     setNote("");
@@ -109,7 +103,8 @@ export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void 
       onDone();
     } catch (err) {
       setBad(true);
-      setNote(txError(err, "Buy failed"));
+      setNote("");
+      toast(txError(err, "Buy failed"));
     } finally {
       setBusy(false);
     }
@@ -144,7 +139,7 @@ export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void 
       </ol>
       <Field label={`cUSDT amount, ${eth(sale.minContribution)} to ${eth(sale.maxContribution)}`} value={amount} onChange={setAmount} />
       <Button disabled={busy || status !== "live"} onClick={buy}>{label}</Button>
-      {note ? <p className={bad ? "note bad" : "note"}>{note}</p> : null}
+      {note ? <p className="note">{note}</p> : null}
     </div>
   );
 }

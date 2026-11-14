@@ -33,7 +33,7 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
 .card.still { cursor: default; }
 .card.still:hover { transform: none; box-shadow: none; }
 @media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after { transition: none !important; scroll-behavior: auto !important; }
+  *, ::before, ::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
 .mono { font-family: ui-monospace, "Cascadia Mono", monospace; }
 ::selection { background: #c8f5d4; }
@@ -370,4 +370,31 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
   .links { grid-template-columns: minmax(0, 1fr); }
   .box, .wizard .box { gap: 10px; padding: 10px; }
   .card-body { padding: 10px 10px 12px; }
+}
+
+.bone {
+  display: block;
+  height: 12px;
+  background: linear-gradient(90deg, #ecece9 25%, #f7f7f5 50%, #ecece9 75%);
+  background-size: 200% 100%;
+  animation: shine 1.3s ease-in-out infinite;
+}
+.bone.art { height: 80px; }
+.bone.round { width: 30px; height: 30px; border-radius: 99px; }
+.bone.lg { width: 48px; height: 48px; }
+.bone.name { width: 58%; height: 14px; }
+.bone.sub { width: 36%; height: 10px; margin-top: 6px; }
+.bone.line { width: 92%; }
+.bone.short { width: 42%; }
+.metrics .bone { width: 64%; height: 14px; }
+.stat .bone { width: 72px; height: 18px; }
+.balance .bone { width: 108px; height: 22px; }
+.count .bone { width: 28px; height: 22px; margin: 0 auto; }
+.sheet dd .bone { width: min(220px, 80%); }
+.hint .bone { display: inline-block; height: 10px; vertical-align: middle; }
+.toasts { position: fixed; z-index: 30; right: 16px; bottom: 16px; display: grid; gap: 8px; width: min(360px, calc(100vw - 32px)); }
+.toast { margin: 0; padding: 12px 14px; border: 1px solid #e7c1bd; background: #fff; color: #b42318; font: inherit; font-size: 13px; line-height: 1.4; text-align: left; }
+@keyframes shine {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
 }

@@ -1,10 +1,11 @@
 "use client";
 
 import { Contract } from "ethers";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cipherSaleAbi } from "@/abi/cipher-sale";
 import { useWallet } from "@/hooks/wallet";
 import { reader } from "@/lib/chain";
+import { toast } from "@/components/ui/toast";
 import { eth, txError } from "@/lib/format";
 import { decryptHandle } from "@/primus/decrypt";
 import { openFhe } from "@/primus/sdk";
@@ -12,15 +13,23 @@ import type { SaleView } from "@/types/sale";
 
 export function Contribution({ sale }: { sale: SaleView }) {
   const { account, provider } = useWallet();
+  const [buyer, setBuyer] = useState(false);
   const [data, setData] = useState<{ paid: bigint; tokens: bigint } | null>(null);
-  const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!account) return setBuyer(false);
+    let stop = false;
+    new Contract(sale.address, cipherSaleAbi, reader).eligible(account).then((ok) => {
+      if (!stop) setBuyer(Boolean(ok));
+    }).catch(() => { if (!stop) setBuyer(false); });
+    return () => { stop = true; };
+  }, [account, sale.address]);
 
   async function toggle() {
     if (data) return setData(null);
-    if (!provider || !account) return setNote("Connect a wallet");
+    if (!provider || !account) return toast("Connect a wallet");
     setBusy(true);
-    setNote("");
     try {
       const contract = new Contract(sale.address, cipherSaleAbi, reader);
       const sdk = await openFhe(provider);
@@ -28,13 +37,15 @@ export function Contribution({ sale }: { sale: SaleView }) {
       const tokens = await decryptHandle(sdk, await contract.claimable(account), sale.address);
       setData({ paid, tokens });
     } catch (err) {
-      setNote(txError(err, "Cannot decrypt"));
+      toast(txError(err, "Cannot decrypt"));
     } finally {
       setBusy(false);
     }
   }
 
-  const share = data && sale.hardCap > 0n ? (Number(data.paid * 10000n / sale.hardCap) / 100).toFixed(2) : "0.00";
+  if (!buyer) return null;
+  const cap = sale.hardCap ?? 0n;
+  const share = data && cap > 0n ? (Number(data.paid * 10000n / cap) / 100).toFixed(2) : "0.00";
   return (
     <div className="box">
       <div className="swap-top">
@@ -50,7 +61,6 @@ export function Contribution({ sale }: { sale: SaleView }) {
       ) : (
         <p className="hint">Encrypted on chain. Show decrypts it for this wallet only.</p>
       )}
-      {note ? <p className="note bad">{note}</p> : null}
     </div>
   );
 }

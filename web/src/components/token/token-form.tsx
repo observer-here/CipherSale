@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { useWallet } from "@/hooks/wallet";
 import { ADDR, requireChain } from "@/lib/chain";
+import { toast } from "@/components/ui/toast";
 import { parseEth, short, txError } from "@/lib/format";
 
 function supplyText(value: string) {
@@ -25,21 +26,16 @@ export function TokenForm() {
   const [supply, setSupply] = useState("1000000");
   const [token, setToken] = useState("");
   const [note, setNote] = useState("");
-  const [bad, setBad] = useState(false);
   const [busy, setBusy] = useState(false);
   const mark = (symbol.trim() || "?").slice(0, 1).toUpperCase();
 
   async function submit() {
-    if (!provider) return setNote("Connect a wallet");
+    if (!provider) return toast("Connect a wallet");
     setBusy(true);
     setNote("");
-    setBad(false);
     setToken("");
     try {
-      if (!name.trim() || !symbol.trim() || parseEth(supply) <= 0n) {
-        setBad(true);
-        return setNote("Enter a name, symbol, and supply");
-      }
+      if (!name.trim() || !symbol.trim() || parseEth(supply) <= 0n) return toast("Enter a name, symbol, and supply");
       await requireChain(provider);
       const signer = await provider.getSigner();
       const factory = new Contract(ADDR.tokenFactory, tokenFactoryAbi, signer);
@@ -54,8 +50,7 @@ export function TokenForm() {
       setToken(address);
       setNote(address ? "Token deployed" : "Token created");
     } catch (err) {
-      setBad(true);
-      setNote(txError(err, "Deploy failed"));
+      toast(txError(err, "Deploy failed"));
     } finally {
       setBusy(false);
     }
@@ -75,7 +70,7 @@ export function TokenForm() {
         <Field label="Symbol" value={symbol} onChange={setSymbol} />
         <div className="wide"><Field label="Total supply" value={supply} onChange={setSupply} /></div>
         <Button disabled={busy} type="submit">{busy ? "Deploying" : "Deploy token"}</Button>
-        {note ? <p className={bad ? "note bad" : "note"}>{note}</p> : null}
+        {note ? <p className="note">{note}</p> : null}
         {token ? <p className="mono">{short(token)} · <Link href="/create-sale">Create a sale</Link></p> : null}
       </form>
       <div className="box">

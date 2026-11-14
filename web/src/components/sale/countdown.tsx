@@ -1,4 +1,4 @@
-export function Countdown({ left }: { left: number }) {
+export function Countdown({ left, pending = false }: { left: number; pending?: boolean }) {
   const rest = Math.max(0, left);
   const cells: [number, string][] = [
     [Math.floor(rest / 86400), "Days"],
@@ -9,7 +9,10 @@ export function Countdown({ left }: { left: number }) {
   return (
     <div className="count">
       {cells.map(([value, label]) => (
-        <div key={label}><b>{String(value).padStart(2, "0")}</b><span>{label}</span></div>
+        <div key={label}>
+          <b>{pending ? <span className="bone" /> : String(value).padStart(2, "0")}</b>
+          <span>{label}</span>
+        </div>
       ))}
     </div>
   );

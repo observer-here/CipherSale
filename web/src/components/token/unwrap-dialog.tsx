@@ -6,6 +6,7 @@ import { cipherTokenAbi } from "@/abi/cipher-token";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/wallet";
 import { ADDR, reader, requireChain } from "@/lib/chain";
+import { toast } from "@/components/ui/toast";
 import { eth, parseEth, short, txError } from "@/lib/format";
 import { publicDecryptHandles } from "@/primus/decrypt";
 import { fheFee } from "@/primus/fee";
@@ -31,7 +32,6 @@ export function UnwrapDialog({
   const { account, provider } = useWallet();
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
-  const [bad, setBad] = useState(false);
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<string[]>([]);
   const value = preview(amount);
@@ -63,15 +63,14 @@ export function UnwrapDialog({
     if (!provider) return;
     setBusy(true);
     setNote("");
-    setBad(false);
     try {
       await requireChain(provider);
       await work();
       setNote(done);
       onDone();
     } catch (err) {
-      setBad(true);
-      setNote(txError(err, "Unwrap failed"));
+      setNote("");
+      toast(txError(err, "Unwrap failed"));
     } finally {
       setBusy(false);
       loadPending().catch(() => undefined);
@@ -81,8 +80,8 @@ export function UnwrapDialog({
   async function unwrap() {
     if (!provider || !account) return;
     let wei: bigint;
-    try { wei = parseEth(amount); } catch { return setNote("Enter an amount"); }
-    if (wei <= 0n) return setNote("Enter an amount");
+    try { wei = parseEth(amount); } catch { return toast("Enter an amount"); }
+    if (wei <= 0n) return toast("Enter an amount");
     await run(async () => {
       const signer = await provider.getSigner();
       const me = await signer.getAddress();
@@ -117,7 +116,7 @@ export function UnwrapDialog({
           Finish {short(id)}
         </Button>
       ))}
-      {note ? <p className={bad ? "note bad" : "note"}>{note}</p> : null}
+      {note ? <p className="note">{note}</p> : null}
     </div>
   );
 }

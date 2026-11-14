@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense, type ReactNode } from "react";
 import { AppShell } from "@/components/layout/app-shell";
+import { Toasts } from "@/components/ui/toast";
 import { WalletProvider } from "@/hooks/wallet";
 import "@fontsource-variable/inter/wght.css";
 import "@fontsource-variable/inter/wght-italic.css";
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <Suspense fallback={null}>
             <AppShell>{children}</AppShell>
           </Suspense>
+          <Toasts />
         </WalletProvider>
       </body>
     </html>
