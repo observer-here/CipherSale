@@ -9,4 +9,4 @@ npm run abi
 npm run deploy
 ```
 
-`abi` copies artifacts into `web/src/abi`. Deploy reads `PRIVATE_KEY` from `.env` and prints CHT, cCHT, and the factories. The full map of files and the sale flow is in the root README.
+`abi` copies artifacts into `web/src/abi`. Deploy reads `PRIVATE_KEY` from `.env` and prints USDT, cUSDT, and the factories. The full map of files and the sale flow is in the root README.
