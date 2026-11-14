@@ -71,7 +71,6 @@ export function TokenForm() {
         <Field label="Name" value={name} onChange={setName} />
         <Field label="Symbol" value={symbol} onChange={setSymbol} />
         <div className="wide"><Field label="Total supply" value={supply} onChange={setSupply} /></div>
-        <p className="hint">This is a normal BEP-20. The full supply is minted to the connected wallet. A sale locks part of it later.</p>
         <Button disabled={busy} type="submit">{busy ? "Deploying" : "Deploy token"}</Button>
         {note ? <p className={bad ? "note bad" : "note"}>{note}</p> : null}
         {token ? <p className="mono">{short(token)} · <Link href="/create-sale">Create a sale</Link></p> : null}

@@ -9,7 +9,7 @@ import { Contribution } from "@/components/sale/contribution";
 import { Countdown } from "@/components/sale/countdown";
 import { Copy } from "@/components/ui/copy";
 import { reader } from "@/lib/chain";
-import { eth, short, units, usd, when } from "@/lib/format";
+import { eth, fdv, short, units, usd, when } from "@/lib/format";
 import { isLink } from "@/lib/meta";
 import { loadSale, saleStatus } from "@/lib/read";
 import type { SaleView } from "@/types/sale";
@@ -52,6 +52,7 @@ export default function SalePage() {
     ["Sale address", <Address key="s" value={sale.address} />],
     ["Tokens for sale", `${eth(sale.tokenPresale)} ${symbol}`],
     ["Price", usd(sale.presaleRate)],
+    ["FDV", fdv(sale.totalSupply, sale.presaleRate)],
     ["Soft cap", `${eth(sale.softCap)} cUSDT`],
     ["Hard cap", `${eth(sale.hardCap)} cUSDT`],
     ["Contribution", `${eth(sale.minContribution)} to ${eth(sale.maxContribution)} cUSDT`],
@@ -76,7 +77,7 @@ export default function SalePage() {
             {links.map(([key, label]) => <a key={key} href={sale.meta[key]} target="_blank" rel="noreferrer noopener"><span>{label}</span></a>)}
           </div>
         </div>
-        <span className={`pill ${status}`}>{status}</span>
+        <span className={`pill ${status}`}>{status === "refunding" ? "Canceled" : status}</span>
       </div>
       <div className="sale">
         <div className="stack">

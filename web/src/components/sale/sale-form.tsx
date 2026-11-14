@@ -278,7 +278,7 @@ export function SaleForm() {
   const preview: [string, string, string][] = ok ? [
     [paths.layers, "Token", meta ? `${meta.name} · ${symbol}` : "Not set"],
     [paths.coin, "Price", priceText || "—"],
-    ...(fdv ? [[paths.coin, "FDV", fdv] as [string, string, string]] : []),
+    [paths.coin, "FDV", fdv || "—"],
     [paths.coin, "Caps", `${pretty(ok.opts.softCap)} – ${pretty(ok.opts.hardCap)} cUSDT`],
     [paths.wallet, "Contribution", `${pretty(ok.opts.minContribution)} – ${pretty(ok.opts.maxContribution)} cUSDT`],
     [paths.shield, "Verification", chosen.label],
@@ -290,7 +290,7 @@ export function SaleForm() {
     ["Token", symbol],
     ["Project", meta?.name || "—"],
     ["Price", priceText || "—"],
-    ...(fdv ? [["FDV", fdv] as [string, string]] : []),
+    ["FDV", fdv || "—"],
     ["Soft cap", `${pretty(ok.opts.softCap)} cUSDT`],
     ["Hard cap", `${pretty(ok.opts.hardCap)} cUSDT`],
     ["Contribution", `${pretty(ok.opts.minContribution)} – ${pretty(ok.opts.maxContribution)} cUSDT`],
@@ -317,9 +317,7 @@ export function SaleForm() {
   return (
     <form className="wizard" onSubmit={(event) => { event.preventDefault(); submit(); }}>
       <header className="wizard-head">
-        <p className="kicker"><i />Create a token sale</p>
         <h1>Create a Token Sale</h1>
-        <p className="deck">Launch a private token sale with zkTLS verification and confidential payments.</p>
       </header>
       <nav className="wizard-steps" aria-label="Create sale steps">
         {STEPS.map(([short, title], n) => (
@@ -384,7 +382,6 @@ export function SaleForm() {
             <div className="form">
               <h2>Pricing</h2>
               <Field label="Price per token" value={rate} onChange={setRate} />
-              {fdv ? <p className="hint">FDV {fdv}</p> : null}
               <h2>Sale limits</h2>
               <Field label="Soft cap (cUSDT)" value={soft} onChange={setSoft} />
               <Field label="Hard cap (cUSDT)" value={hard} onChange={setHard} />

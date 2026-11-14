@@ -27,7 +27,7 @@ export function SaleCard({ sale }: { sale: SaleView }) {
   const status = saleStatus(sale, now);
   const pct = windowPct(sale, now);
   const art = (parseInt(sale.address.slice(2, 4), 16) % 3) + 1;
-  const label = status === "ended" ? "Closed" : status[0].toUpperCase() + status.slice(1);
+  const label = status === "refunding" ? "Canceled" : status === "ended" ? "Closed" : status[0].toUpperCase() + status.slice(1);
   return (
     <Link href={`/sale/${sale.address}`} className={`card${status === "live" ? " live" : ""}`}>
       <div className={`card-art art-${art}`}>

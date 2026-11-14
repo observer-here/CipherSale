@@ -22,7 +22,6 @@ export default function PurchasesPage() {
     }
     let stop = false;
     Promise.all(sales.map(async (sale) => {
-      if (sale.owner.toLowerCase() === account.toLowerCase()) return sale;
       const eligible = await new Contract(sale.address, cipherSaleAbi, reader).eligible(account);
       return eligible ? sale : null;
     })).then((rows) => {
@@ -36,10 +35,7 @@ export default function PurchasesPage() {
   return (
     <section className="page" style={{ maxWidth: "none" }}>
       <div className="page-head">
-        <div>
-          <h1>My purchases</h1>
-          <p className="lede">Sales you created, or where this wallet was marked eligible. Contribution sizes stay encrypted.</p>
-        </div>
+        <h1>My purchases</h1>
       </div>
       {!account ? <button className="btn" onClick={connect}>Connect</button> : null}
       {account && state === "ready" && !mine.length ? <p className="hint">No sales for this wallet yet.</p> : null}

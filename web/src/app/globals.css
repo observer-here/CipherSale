@@ -148,8 +148,10 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
 
 /* Sales board */
 .board-head { display: flex; align-items: center; margin-top: 20px; }
+.explore .board-head { margin-top: 0; margin-left: 56px; }
 .board-head h2 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.03em; line-height: 26px; }
-.filters { display: flex; gap: 8px; margin-left: 150px; }
+.board-head h2 + .filters { margin-left: 150px; }
+.filters { display: flex; gap: 8px; }
 .filters button { height: 28px; padding: 0 15px; border: 1px solid var(--line); border-radius: 0; background: #fff; color: #222; font-size: 12px; font-weight: 500; }
 .filters button.on { border-color: var(--ink); background: var(--ink); color: #fff; }
 .view-all { margin-left: auto; font-size: 12px; font-weight: 500; }
@@ -188,8 +190,7 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
 /* Inner pages */
 .page { display: grid; gap: 18px; max-width: 920px; }
 .page.create { max-width: 1180px; }
-.page-head h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.03em; }
-.page-head p { max-width: 560px; }
+.page-head h1 { margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.04em; line-height: 1.1; }
 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
 .sheet { display: grid; margin: 0; }
 .sheet div { display: grid; grid-template-columns: 9rem 1fr; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
@@ -235,7 +236,7 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
 .sale { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 .sale-head { display: flex; align-items: center; gap: 14px; }
 .sale-head .avatar { width: 48px; height: 48px; font-size: 18px; }
-.sale-head h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.03em; }
+.sale-head h1 { margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.04em; line-height: 1.1; }
 .sale-head h1 span { color: var(--muted); font-weight: 500; }
 .sale-head .tags { margin-top: 6px; }
 .sale-head .pill { margin-left: auto; }
@@ -309,7 +310,7 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
   .stat:nth-child(n + 3) { border-top: 1px solid var(--line); }
 
   .board-head { flex-wrap: wrap; gap: 12px; }
-  .filters { order: 3; width: 100%; margin-left: 0; overflow-x: auto; scrollbar-width: none; }
+  .board-head .filters { order: 3; width: 100%; margin-left: 0; overflow-x: auto; scrollbar-width: none; }
   .filters button { flex: none; }
   .view-all { margin-left: auto; }
   .cards { margin-top: 16px; }
@@ -321,17 +322,13 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
   .stat { gap: 10px; padding: 12px; }
   .stat b { font-size: 17px; }
   .stat small { font-size: 11px; }
-  .page-head h1 { font-size: 22px; }
   .sheet div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
   .wallet-btn { padding: 0 12px; }
 }
 
 /* Create sale */
 .wizard { display: grid; gap: 16px; }
-.kicker { display: flex; align-items: center; gap: 8px; margin: 0; color: #777; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
-.kicker i { width: 7px; height: 7px; border-radius: 99px; background: var(--lime); box-shadow: 0 0 0 3px #e7f8c4; }
-.wizard-head h1 { margin: 8px 0 0; font-size: 32px; font-weight: 700; letter-spacing: -0.04em; line-height: 1.1; }
-.deck { max-width: 540px; margin: 8px 0 0; color: #555; font-size: 15px; line-height: 1.45; }
+.wizard-head h1 { margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.04em; line-height: 1.1; }
 .wizard-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .wizard-steps button { display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; min-height: 40px; padding: 8px; border: 1px solid var(--line); border-radius: 0; background: #fff; color: #333; font-size: 13px; font-weight: 600; }
 .wizard-steps button:not(.on):hover { background: #f6f6f4; }
@@ -368,7 +365,7 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
 @media (max-width: 980px) {
   .wizard-grid { grid-template-columns: minmax(0, 1fr); }
   .wizard-grid > :last-child { position: static; }
-  .wizard-head h1 { font-size: 26px; }
+  .wizard-head h1, .page-head h1, .sale-head h1 { font-size: 26px; }
 }
 @media (max-width: 768px) {
   .links { grid-template-columns: minmax(0, 1fr); }

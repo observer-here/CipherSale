@@ -9,12 +9,9 @@ function Explore() {
   const { sales, state } = useSales();
   const query = useSearchParams().get("q") ?? "";
   return (
-    <div className="page" style={{ maxWidth: "none" }}>
+    <div className="page explore" style={{ maxWidth: "none" }}>
       <div className="page-head">
-        <div>
-          <h1>Sales</h1>
-          <p className="lede">Public terms are listed here. The amount raised stays encrypted.</p>
-        </div>
+        <h1>Sales</h1>
       </div>
       <SaleBoard sales={sales} state={state} query={query} />
     </div>

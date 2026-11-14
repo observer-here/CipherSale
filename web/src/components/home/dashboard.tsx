@@ -19,7 +19,7 @@ export function Dashboard() {
   const revealed = sales.reduce((sum, sale) => sum + sale.totalRaised, 0n);
   const published = sales.length > 0 && sales.every((sale) => sale.state === 3 || sale.state === 4);
   const stats = [
-    [paths.layers, ready ? String(live) : "—", "Active Sales"],
+    [paths.layers, ready ? String(live) : "—", "Sales"],
     [people, ready ? String(proofs) : "—", "Verified Participants"],
     [paths.coin, revealed > 0n || published ? `${units(revealed)} cUSDT` : "Private", "Total Raised"],
     [paths.shield, ready ? String(sales.length) : "—", "Total Sales"],
@@ -54,7 +54,7 @@ export function Dashboard() {
           </article>
         ))}
       </section>
-      <SaleBoard sales={sales} state={state} query={query} limit={3} />
+      <SaleBoard sales={sales} state={state} query={query} limit={3} title="Sales" />
     </>
   );
 }

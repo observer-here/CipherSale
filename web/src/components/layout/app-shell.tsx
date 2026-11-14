@@ -11,6 +11,7 @@ const platform = [
   ["/sales", "Explore Sales", paths.layers],
   ["/create-sale", "Create Sale", "M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z M12 8v8 M8 12h8"],
   ["/create-token", "Launch Token", "M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17z M8 12h8"],
+  ["/my-sales", "My Sales", "M4 6h16 M4 12h10 M4 18h16"],
   ["/purchases", "My Purchases", paths.wallet],
   ["/assets", "Assets", "M7 8h12l-3-3 M17 16H5l3 3"],
 ];

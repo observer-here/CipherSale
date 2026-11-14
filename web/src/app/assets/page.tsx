@@ -51,10 +51,7 @@ export default function AssetsPage() {
   return (
     <section className="page">
       <div className="page-head">
-        <div>
-          <h1>Assets</h1>
-          <p className="lede">Wrap USDT into cUSDT, or unwrap it back. 1 USDT = 1 cUSDT.</p>
-        </div>
+        <h1>Assets</h1>
       </div>
       {!account ? (
         <div className="box swap">

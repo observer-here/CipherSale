@@ -18,11 +18,13 @@ export function SaleBoard({
   state,
   query,
   limit,
+  title,
 }: {
   sales: SaleView[];
   state: "loading" | "ready" | "error";
   query: string;
   limit?: number;
+  title?: string;
 }) {
   const [filter, setFilter] = useState<(typeof filters)[number]>("all");
   const needle = query.trim().toLowerCase();
@@ -40,7 +42,7 @@ export function SaleBoard({
   return (
     <section>
       <div className="board-head">
-        <h2>Active Sales</h2>
+        {title ? <h2>{title}</h2> : null}
         <div className="filters">
           {filters.map((item) => (
             <button key={item} className={item === filter ? "on" : ""} onClick={() => setFilter(item)}>
