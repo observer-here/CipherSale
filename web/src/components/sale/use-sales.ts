@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "@/components/ui/toast";
 import { reader } from "@/lib/chain";
-import { watchSales } from "@/lib/read";
+import { listSales } from "@/lib/read";
 import type { SaleView } from "@/types/sale";
 
 const FRESH_MS = 20_000;
@@ -20,12 +20,6 @@ const listeners = new Set<() => void>();
 
 function publish() {
   for (const hear of listeners) hear();
-}
-
-function write(index: number, address: string, patch: Partial<SaleView> = {}) {
-  const prev = slots[index];
-  slots[index] = { address, sale: { ...prev?.sale, ...patch, address } };
-  publish();
 }
 
 export function clearSales() {
@@ -45,12 +39,9 @@ function ensure() {
   phase = "loading";
   slots = [];
   publish();
-  watchSales(reader, (index, address) => {
-    if (id === run) write(index, address);
-  }, (index, patch) => {
-    if (id === run) write(index, slots[index]?.address ?? patch.address ?? "", patch);
-  }, () => id === run).then(() => {
+  listSales(reader).then((sales) => {
     if (id !== run) return;
+    slots = sales.map((sale) => ({ address: sale.address, sale }));
     phase = "ready";
     at = Date.now();
     loading = false;
