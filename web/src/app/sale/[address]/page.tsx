@@ -50,7 +50,6 @@ export default function SalePage() {
   ];
   const saleRows: [string, React.ReactNode][] = [
     ["Sale address", <Address key="s" value={sale.address} />],
-    ["cToken address", <Address key="c" value={sale.saleToken} />],
     ["Tokens for sale", `${eth(sale.tokenPresale)} ${symbol}`],
     ["Price", usd(sale.presaleRate)],
     ["Soft cap", `${eth(sale.softCap)} cUSDT`],

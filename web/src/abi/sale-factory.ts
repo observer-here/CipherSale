@@ -11,11 +11,6 @@ export const saleFactoryAbi = [
         "internalType": "address",
         "name": "primus_",
         "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "wrappers_",
-        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -40,12 +35,6 @@ export const saleFactoryAbi = [
         "indexed": false,
         "internalType": "address",
         "name": "token",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "ctoken",
         "type": "address"
       }
     ],
@@ -185,19 +174,6 @@ export const saleFactoryAbi = [
     "outputs": [
       {
         "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "wrappers",
-    "outputs": [
-      {
-        "internalType": "contract CipherTokenFactory",
         "name": "",
         "type": "address"
       }

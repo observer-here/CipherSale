@@ -14,11 +14,6 @@ export const cipherSaleAbi = [
       },
       {
         "internalType": "address",
-        "name": "saleToken_",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
         "name": "projectToken",
         "type": "address"
       },
@@ -116,6 +111,19 @@ export const cipherSaleAbi = [
       }
     ],
     "name": "Bought",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "buyer",
+        "type": "address"
+      }
+    ],
+    "name": "ClaimRequested",
     "type": "event"
   },
   {
@@ -404,6 +412,43 @@ export const cipherSaleAbi = [
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "proof",
+        "type": "bytes"
+      }
+    ],
+    "name": "claim",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "claimOpen",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "",
         "type": "address"
@@ -609,22 +654,16 @@ export const cipherSaleAbi = [
   },
   {
     "inputs": [],
-    "name": "requestFinalize",
+    "name": "requestClaim",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "saleToken",
-    "outputs": [
-      {
-        "internalType": "contract ICipherToken",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
+    "name": "requestFinalize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -674,6 +713,19 @@ export const cipherSaleAbi = [
         "internalType": "contract IBEP20",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "tokensClaimed",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",

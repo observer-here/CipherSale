@@ -35,11 +35,15 @@ abstract contract CipherConfig {
     }
 
     modifier chargeFee() {
-        // The executor reverts when the payer is a contract. A sale funds its token
-        // through the factory, so that call is charged to the wallet that sent it.
+        takeFee();
+        _;
+    }
+
+    // The executor reverts when the payer is a contract. A sale funds its token
+    // through the factory, so that call is charged to the wallet that sent it.
+    function takeFee() internal {
         address payer = msg.sender == tx.origin ? msg.sender : tx.origin;
         IPrimusFee(FHE_EXECUTOR).chargeFee{value: msg.value}(payer);
-        _;
     }
 
     function verify(uve_uint256 calldata input) internal returns (ve_uint256) {

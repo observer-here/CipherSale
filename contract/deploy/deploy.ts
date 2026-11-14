@@ -26,20 +26,15 @@ async function main() {
   const tokens = await ethers.deployContract("TokenFactory");
   await tokens.waitForDeployment();
 
-  const wrappers = await ethers.deployContract("CipherTokenFactory");
-  await wrappers.waitForDeployment();
-
   const sales = await ethers.deployContract("CipherSaleFactory", [
     await cusdt.getAddress(),
     PRIMUS_VERIFIER,
-    await wrappers.getAddress(),
   ]);
   await sales.waitForDeployment();
 
   console.log(`USDT ${await usdt.getAddress()}`);
   console.log(`cUSDT ${await cusdt.getAddress()}`);
   console.log(`TokenFactory ${await tokens.getAddress()}`);
-  console.log(`CipherTokenFactory ${await wrappers.getAddress()}`);
   console.log(`CipherSaleFactory ${await sales.getAddress()}`);
 }
 

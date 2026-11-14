@@ -19,7 +19,7 @@ const HINT = {
   ended: "The window closed. Finalize reveals the raised total and tokens sold with a KMS proof.",
   finalizing: "The totals are decryptable. Finalize submits them with the proof.",
   refunding: "The soft cap was missed or the sale was canceled. Refund returns your cUSDT.",
-  succeeded: "The soft cap was met. Claim sends your confidential tokens.",
+  succeeded: "The soft cap was met. Claim sends the plain project tokens.",
 };
 
 export function Actions({ sale, onDone }: { sale: SaleView; onDone: () => void }) {
@@ -60,8 +60,15 @@ export function Actions({ sale, onDone }: { sale: SaleView; onDone: () => void }
     await (await contract.finalize(raised, sold, proof, { value })).wait();
   });
 
-  const settle = () => run(status === "succeeded" ? "Claiming" : "Refunding", async (contract) => {
+  const settle = () => run("Refunding", async (contract) => {
     await (await contract.settle({ value: fheFee("settle") })).wait();
+  });
+
+  const claim = () => run("Claiming", async (contract) => {
+    if (!(await contract.claimOpen(account))) await (await contract.requestClaim()).wait();
+    const sdk = await openFhe(provider!);
+    const { values: [amount], proof } = await publicDecryptHandles(sdk, [await contract.claimable(account)]);
+    await (await contract.claim(amount, proof)).wait();
   });
 
   const cancel = () => run("Canceling", async (contract) => {
@@ -78,9 +85,8 @@ export function Actions({ sale, onDone }: { sale: SaleView; onDone: () => void }
       <p className="hint">{HINT[status]}</p>
       <div className="row">
         {status === "ended" || status === "finalizing" ? <Button disabled={busy || !account} onClick={finalize}>Finalize</Button> : null}
-        {status === "succeeded" || status === "refunding" ? (
-          <Button disabled={busy || !account} onClick={settle}>{status === "succeeded" ? "Claim tokens" : "Refund cUSDT"}</Button>
-        ) : null}
+        {status === "succeeded" ? <Button disabled={busy || !account} onClick={claim}>Claim tokens</Button> : null}
+        {status === "refunding" ? <Button disabled={busy || !account} onClick={settle}>Refund cUSDT</Button> : null}
         {owner && (status === "live" || status === "upcoming") ? <Button variant="ghost" disabled={busy} onClick={cancel}>Cancel sale</Button> : null}
       </div>
       {note ? <p className={`note${bad ? " bad" : ""}`}>{note}</p> : null}

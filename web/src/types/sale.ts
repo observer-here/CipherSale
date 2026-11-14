@@ -15,7 +15,6 @@ export type SaleView = SaleTerms & {
   address: string;
   owner: string;
   token: string;
-  saleToken: string;
   state: number;
   totalRaised: bigint;
   totalSold: bigint;

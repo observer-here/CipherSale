@@ -28,10 +28,9 @@ export async function listSales(provider: Provider): Promise<SaleView[]> {
 
 export async function loadSale(provider: Provider, address: string): Promise<SaleView> {
   const sale = new Contract(address, cipherSaleAbi, provider);
-  const [owner, token, saleToken, state, totalRaised, totalSold, buyers, raised, tokensSold, options, metadata] = await Promise.all([
+  const [owner, token, state, totalRaised, totalSold, buyers, raised, tokensSold, options, metadata] = await Promise.all([
     sale.owner(),
     sale.token(),
-    sale.saleToken(),
     sale.state(),
     sale.totalRaised(),
     sale.totalSold(),
@@ -52,7 +51,6 @@ export async function loadSale(provider: Provider, address: string): Promise<Sal
     address,
     owner,
     token,
-    saleToken,
     state: Number(state),
     totalRaised,
     totalSold,

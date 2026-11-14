@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 // Institution sale. A buyer proves the sale condition once, then pays an encrypted cUSDT amount.
 // When the owner cancels, or after the window, anyone reveals raised and tokensSold with a KMS proof.
-// A cancel, or a total below the soft cap, refunds buyers their cUSDT. Above it, buyers settle into the confidential project token and the owner is paid in cUSDT.
+// A cancel, or a total below the soft cap, refunds buyers their cUSDT. Above it, the owner is paid in cUSDT and buyers claim the plain tokens deposited here.
 // The factory pulls tokenPresale into this contract. Unsold tokens return to the owner.
 // Rates are project-token wei per 1e18 payment wei.
 import {FHE, ve_uint256} from "@primuslabs/fhe-contracts/contracts/lib/FHE.sol";
@@ -38,7 +38,6 @@ contract CipherSale is CipherConfig, ICipherSale {
     address public owner;
     IPrimusZKTLS public primus;
     ICipherToken public payment;
-    ICipherToken public saleToken;
     IBEP20 public token;
     bytes32 public conditionHash;
     string public metadata;
@@ -48,6 +47,7 @@ contract CipherSale is CipherConfig, ICipherSale {
     uint256 public totalRaised;
     uint256 public totalSold;
     uint256 public buyers;
+    uint256 public tokensClaimed;
 
     ve_uint256 public raised;
     ve_uint256 public tokensSold;
@@ -55,12 +55,12 @@ contract CipherSale is CipherConfig, ICipherSale {
     mapping(address => ve_uint256) public claimable;
     mapping(address => bool) public eligible;
     mapping(address => bool) public settled;
+    mapping(address => bool) public claimOpen;
     mapping(bytes32 => bool) public usedAttestation;
 
     constructor(
         address primusVerifier,
         address paymentToken,
-        address saleToken_,
         address projectToken,
         address owner_,
         string memory attConditions,
@@ -68,16 +68,14 @@ contract CipherSale is CipherConfig, ICipherSale {
         SaleOptions memory opts
     ) {
         require(
-            primusVerifier != address(0) && paymentToken != address(0) && saleToken_ != address(0)
-                && projectToken != address(0) && owner_ != address(0),
+            primusVerifier != address(0) && paymentToken != address(0) && projectToken != address(0)
+                && owner_ != address(0),
             "address"
         );
-        require(address(ICipherToken(saleToken_).underlying()) == projectToken, "underlying");
         _check(opts);
         owner = owner_;
         primus = IPrimusZKTLS(primusVerifier);
         payment = ICipherToken(paymentToken);
-        saleToken = ICipherToken(saleToken_);
         token = IBEP20(projectToken);
         conditionHash = keccak256(bytes(attConditions));
         metadata = metadata_;
@@ -125,7 +123,7 @@ contract CipherSale is CipherConfig, ICipherSale {
         emit FinalizeRequested();
     }
 
-    // msg.value is the FHE fee for wrapping the sold tokens. It is only spent when the soft cap is met.
+    // msg.value is the FHE fee for paying the owner in cUSDT. It is only spent when the soft cap is met.
     function finalize(uint256 raisedClear, uint256 soldClear, bytes calldata proof) external payable {
         require(state == FINALIZING, "state");
         checkReveal(_totals(), abi.encode(raisedClear, soldClear), proof);
@@ -137,11 +135,7 @@ contract CipherSale is CipherConfig, ICipherSale {
             return;
         }
         state = SUCCEEDED;
-
-        if (soldClear > 0) {
-            require(token.approve(address(saleToken), soldClear), "approve");
-            saleToken.deposit{value: msg.value}(soldClear);
-        }
+        takeFee();
         ve_uint256 proceeds = FHE.asVEUint256(raisedClear);
         FHE.accessPolicy(proceeds, address(payment), PermissionType.Transient);
         payment.transferFromVerified(address(this), owner, proceeds);
@@ -151,16 +145,37 @@ contract CipherSale is CipherConfig, ICipherSale {
         emit Finalized(raisedClear, soldClear);
     }
 
-    // Claim after success, refund after failure or cancel.
+    // Refund cUSDT after failure or cancel. A successful sale pays the plain token through claim.
     function settle() external payable chargeFee {
-        require(state == SUCCEEDED || state == REFUNDING, "state");
+        require(state == REFUNDING, "state");
         require(FHE.isInitialized(contributions[msg.sender]) && !settled[msg.sender], "settled");
         settled[msg.sender] = true;
-        (ICipherToken asset, ve_uint256 amount) = state == SUCCEEDED
-            ? (saleToken, claimable[msg.sender])
-            : (payment, contributions[msg.sender]);
-        FHE.accessPolicy(amount, address(asset), PermissionType.Transient);
-        asset.transferFromVerified(address(this), msg.sender, amount);
+        ve_uint256 amount = contributions[msg.sender];
+        FHE.accessPolicy(amount, address(payment), PermissionType.Transient);
+        payment.transferFromVerified(address(this), msg.sender, amount);
+        emit Settled(msg.sender);
+    }
+
+    // The claim amount is encrypted until the buyer opens it. The next tx submits the KMS proof.
+    function requestClaim() external {
+        require(state == SUCCEEDED && !settled[msg.sender] && !claimOpen[msg.sender], "claim");
+        require(FHE.isInitialized(claimable[msg.sender]), "claim");
+        claimOpen[msg.sender] = true;
+        IACL(ACL).allowForDecryption(_claim());
+        emit ClaimRequested(msg.sender);
+    }
+
+    function claim(uint256 amount, bytes calldata proof) external {
+        require(state == SUCCEEDED && claimOpen[msg.sender] && !settled[msg.sender], "claim");
+        checkReveal(_claim(), abi.encode(amount), proof);
+        settled[msg.sender] = true;
+        if (amount == 0) {
+            emit Settled(msg.sender);
+            return;
+        }
+        tokensClaimed += amount;
+        require(tokensClaimed <= totalSold, "sold");
+        require(token.transfer(msg.sender, amount), "token");
         emit Settled(msg.sender);
     }
 
@@ -174,6 +189,11 @@ contract CipherSale is CipherConfig, ICipherSale {
         handles = new bytes32[](2);
         handles[0] = FHE.toBytes32(raised);
         handles[1] = FHE.toBytes32(tokensSold);
+    }
+
+    function _claim() internal view returns (bytes32[] memory handles) {
+        handles = new bytes32[](1);
+        handles[0] = FHE.toBytes32(claimable[msg.sender]);
     }
 
     function _check(SaleOptions memory opts) internal pure {
