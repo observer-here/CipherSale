@@ -125,7 +125,7 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
 
 /* Hero */
 .hero { position: relative; min-height: 268px; }
-.hero-photo { position: absolute; top: -112px; left: 26%; width: 72%; max-width: 900px; mix-blend-mode: multiply; pointer-events: none; }
+.hero-photo { position: absolute; top: -112px; left: 30%; width: 72%; max-width: 900px; mix-blend-mode: multiply; pointer-events: none; }
 .hero-copy { position: relative; z-index: 1; }
 .hero h1 { margin: 0; font-size: 39px; font-weight: 700; letter-spacing: -0.04em; line-height: 49px; }
 .hero h1 em {
@@ -174,7 +174,7 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
 .card p { margin: 0; color: var(--muted); font-size: 12px; }
 .ok { width: 8px; height: 8px; border-radius: 99px; background: #3cc84a; }
 .tags { display: flex; flex-wrap: wrap; gap: 6px; }
-.tags span { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 0; color: #333; font-size: 11px; }
+.tags span { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 0; color: #333; font-size: 11px; white-space: nowrap; }
 .tags .timer { margin-left: auto; }
 .card p.starts { color: var(--ink); font-weight: 600; }
 .card p.blurb { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
@@ -264,8 +264,8 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
   .brand { margin-bottom: 24px; font-size: 18px; }
   .nav a { gap: 10px; padding: 0 10px; font-size: 13px; }
   .net { padding: 0 10px; }
-  .top { padding: 14px 14px 0 18px; }
-  .content { padding: 24px 14px 40px 18px; }
+  .top { padding: 14px 14px 0 3px; }
+  .content { padding: 24px 14px 40px 3px; }
   .hero h1 { font-size: 34px; line-height: 43px; }
   .points { flex-wrap: wrap; gap: 10px 0; }
   .points li { padding: 0 18px; }
@@ -273,6 +273,9 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
   .stat b { font-size: 17px; }
   .board-head h2 + .filters { margin-left: 40px; }
   .cards { gap: 14px; }
+  .tags { gap: 4px; }
+  .tags span { gap: 3px; padding: 2px 6px; font-size: 10px; }
+  .tags svg { width: 12px; height: 12px; }
 }
 
 @media (max-width: 900px) {
@@ -312,6 +315,8 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
   .stat:nth-child(even)::before { display: block; }
   .stat:nth-child(n + 3) { border-top: 1px solid var(--line); }
 
+  .tags span { padding: 1px 5px; font-size: 9px; }
+  .tags svg { width: 11px; height: 11px; }
   .board-head { flex-wrap: wrap; gap: 12px; }
   .board-head .filters { order: 3; width: 100%; margin-left: 0; overflow-x: auto; scrollbar-width: none; }
   .filters button { flex: none; }
