@@ -1,14 +1,15 @@
 "use client";
 
-import { Contract } from "ethers";
+import { Contract, id } from "ethers";
 import { useState } from "react";
 import { cipherSaleAbi } from "@/abi/cipher-sale";
+import { cipherTokenAbi } from "@/abi/cipher-token";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/hooks/wallet";
 import { requireChain } from "@/lib/chain";
 import { txError } from "@/lib/format";
 import { saleStatus } from "@/lib/read";
-import { publicDecryptHandles } from "@/primus/decrypt";
+import { decryptHandle, publicDecryptHandles } from "@/primus/decrypt";
 import { fheFee } from "@/primus/fee";
 import { openFhe } from "@/primus/sdk";
 import type { SaleView } from "@/types/sale";
@@ -65,10 +66,38 @@ export function Actions({ sale, onDone }: { sale: SaleView; onDone: () => void }
   });
 
   const claim = () => run("Claiming", async (contract) => {
-    if (!(await contract.claimOpen(account))) await (await contract.requestClaim()).wait();
+    const signer = await provider!.getSigner();
+    const me = await signer.getAddress();
+    const code = (await provider!.getCode(sale.address)).toLowerCase();
+    if (code.includes(id("claim(uint256,bytes)").slice(2, 10))) {
+      const handle = await contract.claimable(me);
+      if (BigInt(handle) === 0n) throw new Error("This wallet did not buy in this sale");
+      if (!(await contract.claimOpen(me))) await (await contract.requestClaim()).wait();
+      const sdk = await openFhe(provider!);
+      const { values: [amount], proof } = await publicDecryptHandles(sdk, [handle]);
+      await (await contract.claim(amount, proof)).wait();
+      return;
+    }
+    // This sale locked the sold tokens in its wrapper. Settle moves them, unwrap releases the plain token.
+    if (!(await contract.settled(me))) {
+      if (BigInt(await contract.claimable(me)) === 0n) throw new Error("This wallet did not buy in this sale");
+      await (await contract.settle({ value: fheFee("settle") })).wait();
+    }
+    const wrapper = await new Contract(sale.address, ["function saleToken() view returns (address)"], provider).saleToken();
+    const wrapped = new Contract(wrapper, cipherTokenAbi, signer);
+    const balance = await wrapped.balanceOf(me);
+    if (BigInt(balance) === 0n) throw new Error("Nothing left to claim");
+    setNote("Releasing the project tokens");
     const sdk = await openFhe(provider!);
-    const { values: [amount], proof } = await publicDecryptHandles(sdk, [await contract.claimable(account)]);
-    await (await contract.claim(amount, proof)).wait();
+    const amount = await decryptHandle(sdk, balance, wrapper);
+    if (amount === 0n) throw new Error("Could not read the claim amount");
+    const receipt = await (await wrapped.unwrap(amount, me, { value: fheFee("unwrap") })).wait();
+    const opened = receipt?.logs
+      .map((log: { topics: string[]; data: string }) => { try { return wrapped.interface.parseLog(log); } catch { return null; } })
+      .find((row: { name: string; args: { id: string } } | null) => row?.name === "UnwrapRequested");
+    if (!opened) throw new Error("Unwrap request not found");
+    const { values: [cleartext], proof } = await publicDecryptHandles(sdk, [opened.args.id]);
+    await (await wrapped.finalizeUnwrap(opened.args.id, cleartext, proof)).wait();
   });
 
   const cancel = () => run("Canceling", async (contract) => {

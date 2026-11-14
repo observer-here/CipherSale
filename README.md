@@ -94,10 +94,10 @@ On cancel or a missed soft cap, `settle` sends that buyer's cUSDT back. The proj
 
 | Contract | Address |
 | --- | --- |
-| USDT | `0x2F1fD2a676b33DCB44E7786144263686C6118171` |
-| cUSDT | `0xD89958aA0881Ebb5067752C432Dabb90cCa87598` |
-| Token factory | `0x5ca05992E983dF92131a1B6220e1bEAEcad33764` |
-| Sale factory | `0x6cEBf7aA5154a6e3Cfd1FE12a3a0Cb9EFeDC9abf` |
+| USDT | `0xE249c4F91F4bA050Afa7df0EED96D842Ef9737E9` |
+| cUSDT | `0xDf37849835556742187FD52a1869FE8B630F5b7C` |
+| Token factory | `0x12081697EB224a320D818444323C0d334862Cb34` |
+| Sale factory | `0xD5D49dc874dD90Ee9d63e9c221a10c3EcbBAED21` |
 
 zkTLS app `0x347e1761d0ea0d09a16fa5c93761c1d03f90339a`, Spotify template `be6b4aaa-cc05-431e-b304-75e99a4868fc`.
 

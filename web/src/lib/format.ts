@@ -1,4 +1,4 @@
-import { formatUnits, parseUnits } from "ethers";
+import { AbiCoder, formatUnits, parseUnits } from "ethers";
 
 export function short(value: string, head = 6, tail = 4) {
   if (!value || value.length <= head + tail + 1) return value || "";
@@ -46,11 +46,34 @@ export function when(unix: number) {
   return new Date(unix * 1000).toLocaleString();
 }
 
+function revertData(value: unknown, depth = 0): string | undefined {
+  if (depth > 6 || value == null) return;
+  if (typeof value === "string") {
+    if (!value.startsWith("0x08c379a0") || value.length < 138) return;
+    try {
+      const text = AbiCoder.defaultAbiCoder().decode(["string"], `0x${value.slice(10)}`)[0];
+      return typeof text === "string" && text ? text : undefined;
+    } catch {
+      return;
+    }
+  }
+  if (typeof value !== "object") return;
+  const row = value as Record<string, unknown>;
+  if (typeof row.reason === "string" && row.reason) return row.reason;
+  for (const key of ["data", "error", "info", "cause"]) {
+    const found = revertData(row[key], depth + 1);
+    if (found) return found;
+  }
+}
+
 // Primus throws ZkAttestationError, which has a message but is not an Error.
 export function txError(err: unknown, fallback: string) {
+  const reason = revertData(err);
+  if (reason) return reason;
   if (typeof err !== "object" || !err) return fallback;
   const row = err as { shortMessage?: unknown; message?: unknown };
-  if (typeof row.shortMessage === "string" && row.shortMessage) return row.shortMessage;
-  if (typeof row.message === "string" && row.message) return row.message;
+  const generic = (text: string) => /internal json-rpc error|could not coalesce error/i.test(text);
+  if (typeof row.shortMessage === "string" && row.shortMessage && !generic(row.shortMessage)) return row.shortMessage;
+  if (typeof row.message === "string" && row.message && !generic(row.message) && row.message.length < 180) return row.message;
   return fallback;
 }
