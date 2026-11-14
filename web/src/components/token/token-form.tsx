@@ -36,7 +36,10 @@ export function TokenForm() {
     setBad(false);
     setToken("");
     try {
-      if (!name.trim() || !symbol.trim() || parseEth(supply) <= 0n) return setNote("Enter a name, symbol, and supply");
+      if (!name.trim() || !symbol.trim() || parseEth(supply) <= 0n) {
+        setBad(true);
+        return setNote("Enter a name, symbol, and supply");
+      }
       await requireChain(provider);
       const signer = await provider.getSigner();
       const factory = new Contract(ADDR.tokenFactory, tokenFactoryAbi, signer);

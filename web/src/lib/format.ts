@@ -38,6 +38,14 @@ export function fdv(supply: bigint, rate: bigint) {
   return compact((supply * 10n ** 18n) / rate);
 }
 
+export function supplyShare(allocated: bigint, supply: bigint) {
+  if (supply <= 0n || allocated <= 0n) return "0%";
+  const bps = (allocated * 10000n) / supply;
+  const whole = bps / 100n;
+  const tenth = (bps % 100n) / 10n;
+  return tenth === 0n ? `${whole}%` : `${whole}.${tenth}%`;
+}
+
 export function parseEth(value: string) {
   return parseUnits(value.trim() || "0", 18);
 }

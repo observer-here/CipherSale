@@ -40,7 +40,11 @@ function SearchBox() {
   const path = usePathname();
   const router = useRouter();
   const q = params.get("q") ?? "";
+  const here = path === "/" || path === "/sales";
+  const [draft, setDraft] = useState(q);
   const ref = useRef<HTMLInputElement>(null);
+
+  useEffect(() => setDraft(here ? q : ""), [here, q]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -53,17 +57,30 @@ function SearchBox() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  function commit(next: string) {
+    const base = here ? path : "/sales";
+    const url = next ? `${base}?q=${encodeURIComponent(next)}` : base;
+    if (here) router.replace(url);
+    else router.push(url);
+  }
+
   return (
     <label className="search">
       <Icon d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14z M20 20l-3.5-3.5" size={16} />
       <input
         ref={ref}
-        value={q}
+        value={here ? q : draft}
         placeholder="Search sales, projects, organizers..."
         onChange={(event) => {
           const next = event.target.value;
-          const base = path === "/" || path === "/sales" ? path : "/sales";
-          router.replace(next ? `${base}?q=${encodeURIComponent(next)}` : base);
+          if (here) commit(next);
+          else setDraft(next);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" && !here) {
+            event.preventDefault();
+            commit(draft);
+          }
         }}
       />
       <kbd>/</kbd>
@@ -75,8 +92,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const [bell, setBell] = useState(false);
   const [drawer, setDrawer] = useState(false);
+  const bellRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setDrawer(false), [path]);
+  useEffect(() => setBell(false), [path]);
+  useEffect(() => {
+    if (!bell) return;
+    function down(event: PointerEvent) {
+      if (bellRef.current?.contains(event.target as Node)) return;
+      setBell(false);
+    }
+    function esc(event: KeyboardEvent) {
+      if (event.key === "Escape") setBell(false);
+    }
+    document.addEventListener("pointerdown", down);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("pointerdown", down);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [bell]);
 
   return (
     <div className="app">
@@ -104,16 +139,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Icon d="M4 7h16 M4 12h16 M4 17h16" size={22} />
           </button>
           <SearchBox />
-          <button className="icon-btn" aria-label="Notices" onClick={() => setBell((open) => !open)}>
-            <Icon d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6z M10 19a2 2 0 0 0 4 0" size={20} />
-          </button>
+          <div className="pop" ref={bellRef}>
+            <button className="icon-btn" aria-label="Notices" onClick={() => setBell((open) => !open)}>
+              <Icon d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6z M10 19a2 2 0 0 0 4 0" size={20} />
+            </button>
+            {bell ? (
+              <div className="menu">
+                <p className="hint">Notices stay on chain. Open a sale to see who was marked eligible. Raised amounts stay hidden until a sale is canceled or its window closes.</p>
+                <Link href="/sales" onClick={() => setBell(false)}>Explore sales</Link>
+              </div>
+            ) : null}
+          </div>
           <WalletMenu />
-          {bell ? (
-            <div className="menu">
-              <p className="hint">Notices stay on chain. Open a sale to see who was marked eligible. Raised amounts stay hidden until a sale is canceled or its window closes.</p>
-              <Link href="/sales" onClick={() => setBell(false)}>Explore sales</Link>
-            </div>
-          ) : null}
         </header>
         <div className="content">{children}</div>
       </div>

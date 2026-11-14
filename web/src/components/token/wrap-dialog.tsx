@@ -9,6 +9,7 @@ import { useWallet } from "@/hooks/wallet";
 import { ADDR, requireChain } from "@/lib/chain";
 import { eth, parseEth, txError } from "@/lib/format";
 import { fheFee } from "@/primus/fee";
+
 function preview(value: string) {
   try { return eth(parseEth(value)); } catch { return "0"; }
 }

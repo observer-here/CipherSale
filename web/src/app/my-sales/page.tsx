@@ -15,6 +15,7 @@ export default function MySalesPage() {
         <h1>My sales</h1>
       </div>
       {!account ? <button className="btn" onClick={connect}>Connect</button> : null}
+      {account && state === "loading" ? <p className="hint">Loading</p> : null}
       {account && state === "ready" && !mine.length ? <p className="hint">No sales from this wallet yet.</p> : null}
       <div className="cards">
         {mine.map((sale) => <SaleCard key={sale.address} sale={sale} />)}

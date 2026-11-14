@@ -1,12 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Icon } from "@/components/ui/icon";
-import { eth, fdv, units } from "@/lib/format";
+import { useEffect, useState } from "react";
+import { fdv, supplyShare, units } from "@/lib/format";
 import { saleStatus } from "@/lib/read";
 import type { SaleView } from "@/types/sale";
-
-const star = "M12 4.5 14.3 9.4l5.2.7-3.8 3.7.9 5.2L12 16.4l-4.6 2.6.9-5.2L4.5 10.1l5.2-.7z";
 
 function windowPct(sale: SaleView, now: number) {
   if (sale.end <= sale.start || now <= sale.start) return 0;
@@ -23,7 +21,11 @@ function startsIn(seconds: number) {
 }
 
 export function SaleCard({ sale }: { sale: SaleView }) {
-  const now = Math.floor(Date.now() / 1000);
+  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  useEffect(() => {
+    const tick = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
+    return () => clearInterval(tick);
+  }, []);
   const status = saleStatus(sale, now);
   const pct = windowPct(sale, now);
   const art = (parseInt(sale.address.slice(2, 4), 16) % 3) + 1;
@@ -32,7 +34,6 @@ export function SaleCard({ sale }: { sale: SaleView }) {
     <Link href={`/sale/${sale.address}`} className={`card${status === "live" ? " live" : ""}`}>
       <div className={`card-art art-${art}`}>
         <span className={`flag ${status}`}>{label}</span>
-        <span className="star"><Icon d={star} size={14} /></span>
       </div>
       <div className="card-body">
         <div className="who">
@@ -57,7 +58,7 @@ export function SaleCard({ sale }: { sale: SaleView }) {
         )}
         <div className="metrics">
           <div><b>{fdv(sale.totalSupply, sale.presaleRate)}</b><span>FDV</span></div>
-          <div><b>{eth(sale.tokenPresale)}</b><span>Allocation</span></div>
+          <div><b>{supplyShare(sale.tokenPresale, sale.totalSupply)}</b><span>Supply</span></div>
           <div><b>{sale.state === 3 || sale.state === 4 ? `${units(sale.totalRaised)} cUSDT` : "Private"}</b><span>Raised</span></div>
         </div>
       </div>

@@ -10,7 +10,7 @@ import { confidentialBalance } from "@/lib/read";
 import { decryptHandle } from "@/primus/decrypt";
 import { openFhe } from "@/primus/sdk";
 
-export function useBalances(enabled = true, decrypt = true) {
+export function useBalances(enabled = true) {
   const { account, provider } = useWallet();
   const [cht, setCht] = useState("—");
   const [ccht, setCcht] = useState("—");
@@ -37,8 +37,7 @@ export function useBalances(enabled = true, decrypt = true) {
     const raw = await new Contract(ADDR.cht, usdtAbi, reader).balanceOf(account);
     setChtRaw(raw);
     setCht(eth(raw));
-    if (decrypt) await reveal();
-  }, [account, decrypt, reveal]);
+  }, [account]);
 
   useEffect(() => {
     if (enabled) refresh().catch(() => undefined);

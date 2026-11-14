@@ -52,14 +52,21 @@ export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void 
   }, [account, sale.address]);
 
   async function buy() {
-    if (!provider) return setNote("Connect a wallet");
+    if (!provider) {
+      setBad(true);
+      return setNote("Connect a wallet");
+    }
     let value: bigint;
     try {
       value = parseEth(amount);
     } catch {
+      setBad(true);
       return setNote("Enter an amount");
     }
-    if (value <= 0n) return setNote("Enter an amount");
+    if (value <= 0n) {
+      setBad(true);
+      return setNote("Enter an amount");
+    }
     setBusy(true);
     setBad(false);
     setNote("");
@@ -108,7 +115,8 @@ export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void 
     }
   }
 
-  const closed = saleStatus(sale) !== "live";
+  const status = saleStatus(sale);
+  const label = busy ? "Working" : status === "upcoming" ? "Not open yet" : status !== "live" ? "Sale closed" : "Contribute";
   const mark = (n: number) => {
     if (step >= 4 || n < step) return "done";
     if (n === step) return bad ? "bad" : "on";
@@ -135,7 +143,7 @@ export function BuyPanel({ sale, onDone }: { sale: SaleView; onDone: () => void 
         })}
       </ol>
       <Field label={`cUSDT amount, ${eth(sale.minContribution)} to ${eth(sale.maxContribution)}`} value={amount} onChange={setAmount} />
-      <Button disabled={busy || closed} onClick={buy}>{busy ? "Working" : closed ? "Sale closed" : "Contribute"}</Button>
+      <Button disabled={busy || status !== "live"} onClick={buy}>{label}</Button>
       {note ? <p className={bad ? "note bad" : "note"}>{note}</p> : null}
     </div>
   );

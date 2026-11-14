@@ -14,13 +14,16 @@ export default function PurchasesPage() {
   const { sales, state } = useSales();
   const { account, connect } = useWallet();
   const [mine, setMine] = useState<SaleView[]>([]);
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
-    if (!account || !sales.length) {
-      setMine((rows) => rows.length ? [] : rows);
+    if (!account || state !== "ready" || !sales.length) {
+      setMine([]);
+      setChecking(false);
       return;
     }
     let stop = false;
+    setChecking(true);
     Promise.all(sales.map(async (sale) => {
       const eligible = await new Contract(sale.address, cipherSaleAbi, reader).eligible(account);
       return eligible ? sale : null;
@@ -28,9 +31,11 @@ export default function PurchasesPage() {
       if (!stop) setMine(rows.filter((sale): sale is SaleView => sale !== null));
     }).catch(() => {
       if (!stop) setMine([]);
+    }).finally(() => {
+      if (!stop) setChecking(false);
     });
     return () => { stop = true; };
-  }, [account, sales]);
+  }, [account, sales, state]);
 
   return (
     <section className="page" style={{ maxWidth: "none" }}>
@@ -38,7 +43,8 @@ export default function PurchasesPage() {
         <h1>My purchases</h1>
       </div>
       {!account ? <button className="btn" onClick={connect}>Connect</button> : null}
-      {account && state === "ready" && !mine.length ? <p className="hint">No sales for this wallet yet.</p> : null}
+      {account && (state === "loading" || checking) ? <p className="hint">Loading</p> : null}
+      {account && state === "ready" && !checking && !mine.length ? <p className="hint">No sales for this wallet yet.</p> : null}
       <div className="cards">
         {mine.map((sale) => <SaleCard key={sale.address} sale={sale} />)}
       </div>

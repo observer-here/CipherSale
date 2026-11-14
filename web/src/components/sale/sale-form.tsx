@@ -12,7 +12,7 @@ import { Icon, Spotify, paths } from "@/components/ui/icon";
 import { clearSales } from "@/components/sale/use-sales";
 import { useWallet } from "@/hooks/wallet";
 import { ADDR, reader, requireChain } from "@/lib/chain";
-import { compact, eth, parseEth, txError, usd } from "@/lib/format";
+import { compact, eth, parseEth, supplyShare, txError, usd } from "@/lib/format";
 import { isLink, stringifyMeta, type SaleMeta } from "@/lib/meta";
 import { GATES } from "@/primus/gates";
 import type { SaleTerms } from "@/types/sale";
@@ -351,7 +351,7 @@ export function SaleForm() {
               <div className="wide"><Field label="Project token address" value={token} onChange={setToken} /></div>
               {meta ? <p className="hint">{meta.name} · {symbol}{account ? ` · ${pretty(meta.balance)} in this wallet` : ""}</p> : null}
               <h2>About</h2>
-              <div className="wide"><Field multiline label="Description" value={about.description} onChange={(description) => setAbout({ ...about, description })} /></div>
+              <div className="wide"><Field multiline max={200} label="Description" value={about.description} onChange={(description) => setAbout({ ...about, description })} /></div>
               <div className="links wide">
                 <Field label="Website" value={about.website} onChange={(website) => setAbout({ ...about, website })} />
                 <Field label="Telegram" value={about.telegram} onChange={(telegram) => setAbout({ ...about, telegram })} />
@@ -444,7 +444,7 @@ export function SaleForm() {
                 symbol={meta?.symbol || "—"}
                 about={about.description.trim()}
                 price={priceText}
-                allocation={pretty(ok.opts.tokenPresale)}
+                supply={meta && meta.supply > 0n ? supplyShare(ok.opts.tokenPresale, meta.supply) : "—"}
                 start={ok.opts.start}
               />
             </div>
@@ -458,7 +458,7 @@ export function SaleForm() {
 
 function Preview({ rows, warn }: { rows: [string, string, string][]; warn: string }) {
   return (
-    <div className="box accent">
+    <div className="box">
       <div className="panel-h">
         <Mark d={paths.layers} />
         <div>
@@ -473,12 +473,12 @@ function Preview({ rows, warn }: { rows: [string, string, string][]; warn: strin
   );
 }
 
-function BuyerCard({ name, symbol, about, price, allocation, start }: {
+function BuyerCard({ name, symbol, about, price, supply, start }: {
   name: string;
   symbol: string;
   about: string;
   price: string;
-  allocation: string;
+  supply: string;
   start: number;
 }) {
   return (
@@ -500,7 +500,7 @@ function BuyerCard({ name, symbol, about, price, allocation, start }: {
         <p className="starts">{ahead(start)}</p>
         <div className="metrics">
           <div><b>{price}</b><span>Price</span></div>
-          <div><b>{allocation}</b><span>Allocation</span></div>
+          <div><b>{supply}</b><span>Supply</span></div>
           <div><b>Private</b><span>Raised</span></div>
         </div>
       </div>

@@ -13,11 +13,12 @@ import { txError } from "@/lib/format";
 
 export default function AssetsPage() {
   const { account, provider, connect } = useWallet();
-  const { cht, ccht, chtRaw, cchtRaw, refresh, reveal } = useBalances(Boolean(account), false);
+  const { cht, ccht, chtRaw, cchtRaw, refresh, reveal } = useBalances(Boolean(account));
   const [tab, setTab] = useState<"wrap" | "unwrap">("wrap");
   const [shown, setShown] = useState(false);
   const [eye, setEye] = useState(false);
   const [note, setNote] = useState("");
+  const [bad, setBad] = useState(false);
 
   async function done() {
     await refresh();
@@ -38,12 +39,14 @@ export default function AssetsPage() {
   async function claim() {
     if (!provider) return;
     setNote("");
+    setBad(false);
     try {
       await requireChain(provider);
       await (await new Contract(ADDR.cht, usdtAbi, await provider.getSigner()).faucet()).wait();
       setNote("1,000 USDT claimed");
       await refresh();
     } catch (err) {
+      setBad(true);
       setNote(txError(err, "Faucet already used"));
     }
   }
@@ -81,7 +84,7 @@ export default function AssetsPage() {
           ) : (
             <UnwrapDialog balance={cchtRaw} onMax={async () => { const value = await reveal(); setShown(true); return value; }} onDone={() => done().catch(() => undefined)} />
           )}
-          {note ? <p className="note">{note}</p> : null}
+          {note ? <p className={bad ? "note bad" : "note"}>{note}</p> : null}
         </div>
       )}
     </section>
