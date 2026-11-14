@@ -1,6 +1,6 @@
 "use client";
 
-import { createAppKit, useAppKit, useAppKitAccount, useAppKitProvider, useDisconnect } from "@reown/appkit/react";
+import { createAppKit, useAppKit, useAppKitAccount, useAppKitProvider } from "@reown/appkit/react";
 import { EthersAdapter } from "@reown/appkit-adapter-ethers";
 import { bscTestnet } from "@reown/appkit/networks";
 import { StorageUtil } from "@reown/appkit-controllers/utils";
@@ -44,32 +44,27 @@ type Wallet = {
   account?: string;
   provider?: BrowserProvider;
   connect: () => void;
-  disconnect: () => void;
 };
 
 const Ctx = createContext<Wallet | null>(null);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const { open } = useAppKit();
-  const { disconnect } = useDisconnect();
-  const { address } = useAppKitAccount();
+  const { address, status } = useAppKitAccount();
   const { walletProvider } = useAppKitProvider<Eip1193Provider>("eip155");
   const kept = useRef<{ account?: string; provider?: BrowserProvider }>({});
 
-  if (address && walletProvider && kept.current.account !== address) {
+  if (status === "disconnected") kept.current = {};
+  else if (address && walletProvider && kept.current.account !== address) {
     kept.current = { account: address, provider: new BrowserProvider(walletProvider, CHAIN_ID) };
   }
-  const account = address ?? kept.current.account;
+  const account = status === "disconnected" ? undefined : (address ?? kept.current.account);
 
   const value = useMemo<Wallet>(() => ({
     account,
     provider: kept.current.provider,
-    connect: () => open(),
-    disconnect: () => {
-      kept.current = {};
-      disconnect();
-    },
-  }), [account, open, disconnect]);
+    connect: () => { void open({ view: account ? "Account" : "Connect" }); },
+  }), [account, open]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

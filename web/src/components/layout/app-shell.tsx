@@ -23,6 +23,17 @@ function on(path: string, href: string) {
   return path === href || path.startsWith(`${href}/`);
 }
 
+function Brand({ className }: { className: string }) {
+  return (
+    <Link href="/" className={className}>
+      <svg width="28" height="16" viewBox="0 0 28 16" fill="currentColor" aria-hidden>
+        <path d="M9.5 0H17l-6 16H3.5z M20 0h7.5l-6 16H14z" />
+      </svg>
+      CipherSale
+    </Link>
+  );
+}
+
 function Nav({ items, path }: { items: string[][]; path: string }) {
   return (
     <nav className="nav">
@@ -117,12 +128,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="app">
       {drawer ? <div className="scrim" onClick={() => setDrawer(false)} /> : null}
       <aside className={drawer ? "side open" : "side"}>
-        <Link href="/" className="brand">
-          <svg width="28" height="16" viewBox="0 0 28 16" fill="currentColor" aria-hidden>
-            <path d="M9.5 0H17l-6 16H3.5z M20 0h7.5l-6 16H14z" />
-          </svg>
-          CipherSale
-        </Link>
+        <Brand className="brand" />
         <Nav items={platform} path={path} />
         <div className="side-foot">
           <div className="net" title="CipherSale runs on BNB testnet only">
@@ -138,6 +144,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <button className="icon-btn menu-btn" aria-label="Open menu" onClick={() => setDrawer(true)}>
             <Icon d="M4 7h16 M4 12h16 M4 17h16" size={22} />
           </button>
+          <Brand className="top-brand" />
           <SearchBox />
           <div className="pop" ref={bellRef}>
             <button className="icon-btn" aria-label="Notices" onClick={() => setBell((open) => !open)}>
