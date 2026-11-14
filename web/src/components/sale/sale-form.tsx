@@ -487,7 +487,7 @@ function BuyerCard({ name, symbol, about, price, supply, start, end }: {
         {about ? <p className="blurb">{about}</p> : null}
         <div className="tags">
           <span><Spotify size={14} className="spotify" /> Spotify</span>
-          {timer ? <span><Icon d={paths.clock} size={14} />{timer}</span> : null}
+          {timer ? <span className="timer"><Icon d={paths.clock} size={14} />{timer}</span> : null}
         </div>
         <div className="metrics">
           <div><b>{price}</b><span>Price</span></div>

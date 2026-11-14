@@ -26,7 +26,7 @@ export function CardBone() {
           </div>
         </div>
         <span className="bone line" />
-        <div className="tags"><span><Spotify size={14} className="spotify" /> Spotify</span><span className="bone" style={{ width: 72, height: 16 }} /></div>
+        <div className="tags"><span><Spotify size={14} className="spotify" /> Spotify</span><span className="bone timer" style={{ width: 72, height: 16 }} /></div>
         <div className="bar-row">
           <div className="bar" />
           <span className="bone" style={{ width: 28 }} />
@@ -81,7 +81,7 @@ export function SaleCard({ sale }: { sale: Partial<SaleView> & { address: string
         {has("meta") ? (sale.meta!.description ? <p className="blurb">{sale.meta!.description}</p> : null) : <span className="bone line" />}
         <div className="tags">
           <span><Spotify size={14} className="spotify" /> Spotify</span>
-          {timer ? <span><Icon d={paths.clock} size={14} />{timer}</span> : !timed ? <span className="bone" style={{ width: 72, height: 16 }} /> : null}
+          {timer ? <span className="timer"><Icon d={paths.clock} size={14} />{timer}</span> : !timed ? <span className="bone timer" style={{ width: 72, height: 16 }} /> : null}
         </div>
         <div className="bar-row" title="Time elapsed in the sale window">
           <div className="bar">{timed ? <i style={{ width: `${pct}%` }} /> : null}</div>

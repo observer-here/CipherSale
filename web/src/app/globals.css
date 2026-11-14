@@ -175,6 +175,7 @@ a, button, .card { transition: background-color 0.15s, color 0.15s, border-color
 .ok { width: 8px; height: 8px; border-radius: 99px; background: #3cc84a; }
 .tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .tags span { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 0; color: #333; font-size: 11px; }
+.tags .timer { margin-left: auto; }
 .card p.starts { color: var(--ink); font-weight: 600; }
 .card p.blurb { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .bar-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; color: #444; font-size: 12px; }
