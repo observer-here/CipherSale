@@ -54,6 +54,16 @@ export function when(unix: number) {
   return new Date(unix * 1000).toLocaleString();
 }
 
+export function clock(seconds: number) {
+  const span = Math.max(0, Math.floor(seconds));
+  const days = Math.floor(span / 86400);
+  const hours = Math.floor((span % 86400) / 3600);
+  const minutes = Math.floor((span % 3600) / 60);
+  const secs = span % 60;
+  const rest = [hours, minutes, secs].map((n) => String(n).padStart(2, "0")).join(":");
+  return days ? `${days}d ${rest}` : rest;
+}
+
 function revertData(value: unknown, depth = 0): string | undefined {
   if (depth > 6 || value == null) return;
   if (typeof value === "string") {

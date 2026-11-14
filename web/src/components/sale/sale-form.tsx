@@ -13,7 +13,7 @@ import { clearSales } from "@/components/sale/use-sales";
 import { useWallet } from "@/hooks/wallet";
 import { ADDR, reader, requireChain } from "@/lib/chain";
 import { toast } from "@/components/ui/toast";
-import { compact, eth, parseEth, supplyShare, txError, usd } from "@/lib/format";
+import { clock, compact, eth, parseEth, supplyShare, txError, usd } from "@/lib/format";
 import { isLink, stringifyMeta, type SaleMeta } from "@/lib/meta";
 import { GATES } from "@/primus/gates";
 import type { SaleTerms } from "@/types/sale";
@@ -49,17 +49,6 @@ function when(unix: number) {
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const hour = date.getHours();
   return `${months[date.getMonth()]} ${date.getDate()}, ${hour % 12 || 12}:${pad(date.getMinutes())} ${hour >= 12 ? "PM" : "AM"}`;
-}
-
-function ahead(unix: number) {
-  const left = unix - Math.floor(Date.now() / 1000);
-  if (left <= 0) return "Window open";
-  const days = Math.floor(left / 86400);
-  const hours = Math.floor((left % 86400) / 3600);
-  const minutes = Math.floor((left % 3600) / 60);
-  if (days) return `Starts in ${days}d ${hours}h`;
-  if (hours) return `Starts in ${hours}h ${minutes}m`;
-  return `Starts in ${minutes || 1}m`;
 }
 
 function Mark({ d }: { d: string }) {
@@ -441,6 +430,7 @@ export function SaleForm() {
                 price={priceText}
                 supply={meta && meta.supply > 0n ? supplyShare(ok.opts.tokenPresale, meta.supply) : "—"}
                 start={ok.opts.start}
+                end={ok.opts.end}
               />
             </div>
             {actions}
@@ -468,14 +458,21 @@ function Preview({ rows, warn }: { rows: [string, string, string][]; warn: strin
   );
 }
 
-function BuyerCard({ name, symbol, about, price, supply, start }: {
+function BuyerCard({ name, symbol, about, price, supply, start, end }: {
   name: string;
   symbol: string;
   about: string;
   price: string;
   supply: string;
   start: number;
+  end: number;
 }) {
+  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  useEffect(() => {
+    const tick = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
+    return () => clearInterval(tick);
+  }, []);
+  const timer = now < start ? `STARTS: ${clock(start - now)}` : now <= end ? `ENDS: ${clock(end - now)}` : "";
   return (
     <div className="card still">
       <div className="card-art art-1"><span className="flag">Preview</span></div>
@@ -489,10 +486,9 @@ function BuyerCard({ name, symbol, about, price, supply, start }: {
         </div>
         {about ? <p className="blurb">{about}</p> : null}
         <div className="tags">
-          <span>zkTLS</span>
-          <span>cUSDT</span>
+          <span><Spotify size={14} className="spotify" /> Spotify</span>
+          {timer ? <span><Icon d={paths.clock} size={14} />{timer}</span> : null}
         </div>
-        <p className="starts">{ahead(start)}</p>
         <div className="metrics">
           <div><b>{price}</b><span>Price</span></div>
           <div><b>{supply}</b><span>Supply</span></div>

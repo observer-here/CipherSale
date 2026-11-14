@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { fdv, supplyShare, units } from "@/lib/format";
+import { Icon, Spotify, paths } from "@/components/ui/icon";
+import { clock, fdv, supplyShare, units } from "@/lib/format";
 import { saleStatus } from "@/lib/read";
 import type { SaleView } from "@/types/sale";
 
@@ -10,14 +11,6 @@ function windowPct(sale: SaleView, now: number) {
   if (sale.end <= sale.start || now <= sale.start) return 0;
   if (now >= sale.end) return 100;
   return Math.round(((now - sale.start) / (sale.end - sale.start)) * 100);
-}
-
-function startsIn(seconds: number) {
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  if (days) return `${days}d ${hours}h`;
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return hours ? `${hours}h ${minutes}m` : `${minutes}m`;
 }
 
 export function CardBone() {
@@ -33,7 +26,7 @@ export function CardBone() {
           </div>
         </div>
         <span className="bone line" />
-        <div className="tags"><span>zkTLS</span><span>cUSDT</span></div>
+        <div className="tags"><span><Spotify size={14} className="spotify" /> Spotify</span><span className="bone" style={{ width: 72, height: 16 }} /></div>
         <div className="bar-row">
           <div className="bar" />
           <span className="bone" style={{ width: 28 }} />
@@ -71,6 +64,7 @@ export function SaleCard({ sale }: { sale: Partial<SaleView> & { address: string
   const fdvText = has("totalSupply") && has("presaleRate") ? fdv(sale.totalSupply!, sale.presaleRate!) : null;
   const supplyText = has("tokenPresale") && has("totalSupply") ? supplyShare(sale.tokenPresale!, sale.totalSupply!) : null;
   const raisedText = has("state") && has("totalRaised") ? (sale.state === 3 || sale.state === 4 ? `${units(sale.totalRaised!)} cUSDT` : "Private") : null;
+  const timer = status === "upcoming" ? `STARTS: ${clock(sale.start! - now)}` : status === "live" ? `ENDS: ${clock(sale.end! - now)}` : "";
   return (
     <Link href={`/sale/${sale.address}`} className={`card${status === "live" ? " live" : ""}`}>
       <div className={`card-art art-${art}`}>
@@ -86,17 +80,13 @@ export function SaleCard({ sale }: { sale: Partial<SaleView> & { address: string
         </div>
         {has("meta") ? (sale.meta!.description ? <p className="blurb">{sale.meta!.description}</p> : null) : <span className="bone line" />}
         <div className="tags">
-          <span>zkTLS</span>
-          <span>cUSDT</span>
+          <span><Spotify size={14} className="spotify" /> Spotify</span>
+          {timer ? <span><Icon d={paths.clock} size={14} />{timer}</span> : !timed ? <span className="bone" style={{ width: 72, height: 16 }} /> : null}
         </div>
-        {status === "upcoming" ? (
-          <p className="starts">Starts in {startsIn(sale.start! - now)}</p>
-        ) : (
-          <div className="bar-row" title="Time elapsed in the sale window">
-            <div className="bar">{timed ? <i style={{ width: `${pct}%` }} /> : null}</div>
-            {timed ? <span>{pct}%</span> : <span className="bone" style={{ width: 28 }} />}
-          </div>
-        )}
+        <div className="bar-row" title="Time elapsed in the sale window">
+          <div className="bar">{timed ? <i style={{ width: `${pct}%` }} /> : null}</div>
+          {timed ? <span>{pct}%</span> : <span className="bone" style={{ width: 28 }} />}
+        </div>
         <div className="metrics">
           <div><b>{fdvText ?? <span className="bone" />}</b><span>FDV</span></div>
           <div><b>{supplyText ?? <span className="bone" />}</b><span>Supply</span></div>
